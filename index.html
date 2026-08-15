@@ -936,7 +936,32 @@
       }
       init();
     })();
-  }
+  }// --- NOUVELLE FONCTIONNALITÉ : ITINÉRAIRE ---
+let currentRoutingControl = null;
+
+function showRouteToHotel(userLat, userLng, hotelLat, hotelLng) {
+    // Si un itinéraire existe déjà, on l'efface
+    if (currentRoutingControl) {
+        map.removeControl(currentRoutingControl);
+    }
+    
+    // On dessine le nouvel itinéraire
+    currentRoutingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(userLat, userLng),
+            L.latLng(hotelLat, hotelLng)
+        ],
+        routeWhileDragging: false,
+        addWaypoints: false,
+        showAlternatives: false,
+        fitSelectedRoutes: true,
+        show: false, // Masque le panneau de texte Leaflet
+        lineOptions: { 
+            styles: [{ color: '#2582FF', opacity: 0.8, weight: 5 }] // J'ai repris ton bleu --loc-blue
+        }
+    }).addTo(map);
+}
+
 </script>
 </body>
 </html>
