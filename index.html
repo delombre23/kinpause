@@ -85,7 +85,7 @@
 
   .hotel-badge-wrap { pointer-events: none !important; }
   .hotel-badge { width: 30px; height: 30px; border-radius: 50%; background: rgba(18,18,18,0.88); border: 1.5px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.55); }
-  .hotel-badge svg { width: 17px; height: 17px; }
+  .hotel-badge svg { width: 16px; height: 15px; }
   .hotel-label, .leaflet-tooltip.hotel-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 0 0 4px !important; color: #FFFFFF !important; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.75); white-space: nowrap; }
   .hotel-label::before { display: none !important; }
   .hotspot-label, .leaflet-tooltip.hotspot-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; color: rgba(255,255,255,0.6) !important; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); white-space: nowrap; }
@@ -502,8 +502,8 @@
       const bounds = L.latLngBounds(HOTELS.map(h => [h.lat, h.lng]));
       map.fitBounds(bounds, { padding: [50, 50] });
 
-      const BED_ICON_MARKER = '<path d="M3 17v-5a2 2 0 012-2h14a2 2 0 012 2v5M3 17v2M21 17v2M5 10V7a2 2 0 012-2h3a2 2 0 012 2v3M12 10V8a2 2 0 012-2h3a2 2 0 012 2v2"/>';
-      function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
+      const BED_ICON_MARKER = '<path d="M3 13.5v-2.5a2 2 0 012-2h14a2 2 0 012 2v2.5M3 13.5v1.5M21 13.5v1.5M5 10V8.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5V10M12 10V8.5a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5V10"/>';
+      function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
 
             function addHotelMarker(hotel) {
         const glow = L.circleMarker([hotel.lat, hotel.lng], { radius: 16, fillColor: '#FFFFFF', fillOpacity: 0.12, stroke: false, interactive: true }).addTo(map);
@@ -603,10 +603,17 @@
       function roundToHalfHour(date) { const ms = 1000*60*30; return new Date(Math.ceil(date.getTime()/ms)*ms); }
       function fmtHHMM(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
       function initTimeSlot() { const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + 2*3600000); selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end); }
-      window.applyPreset = function (hours) {
+            window.applyPreset = function (hours) {
         const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + hours*3600000);
         selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end);
         refreshRoomDetail();
+      };
+      window.applyCustom = function () {
+        const startInput = document.getElementById('startTimeInput');
+        if (startInput) {
+          startInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => startInput.focus(), 350);
+        }
       };
       window.onTimeInputChange = function () {
         const s = document.getElementById('startTimeInput').value, e = document.getElementById('endTimeInput').value;
@@ -781,10 +788,11 @@
           </div>
           <p class="time-heading">Choisissez votre créneau</p>
           <div class="dial-wrap">${renderDial()}</div>
-          <div class="preset-row">
+                    <div class="preset-row">
             <button class="preset-btn" onclick="applyPreset(2)">2h</button>
             <button class="preset-btn" onclick="applyPreset(4)">4h</button>
             <button class="preset-btn" onclick="applyPreset(10)">Nuit</button>
+            <button class="preset-btn" onclick="applyCustom()">Personnalisé</button>
           </div>
           <div class="time-row">
             <div class="time-field"><label>Début</label><input type="time" id="startTimeInput" value="${selectedStartTime}" onchange="onTimeInputChange()"></div>
