@@ -448,7 +448,15 @@
         const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, keyboard: false }).addTo(map);
         glow.bindTooltip(hotel.name, { permanent: true, direction: 'right', offset: [17, 0], className: 'hotel-label', opacity: 1 });
         glow.on('click', function (e) { try { L.DomEvent.stopPropagation(e); } catch (err) {} selectHotel(hotel.id); });
-        hotelMarkers[hotel.id] = { glow, badge };
+        hotelMarkers[hotel.id] = { glow, badge };    hotelMarkers[hotel.id] = { glow, badge };
+    
+    // --- AJOUTE TON DOUBLE-CLIC ICI ---
+    badge.on('dblclick', () => {
+        // Remplace userLocation.lat et lng par tes propres variables de position utilisateur si besoin
+        showRouteToHotel(userLocation.lat, userLocation.lng, hotel.lat, hotel.lng);
+    });
+} // <-- Fin de la fonction addHotelMarker
+
       }
       HOTELS.forEach(addHotelMarker);
 
