@@ -302,21 +302,21 @@
     document.getElementById('errorBanner').textContent = 'Map library (Leaflet) failed to load — check your connection and refresh.';
   } else {
     (function () {
-      const HOTELS = [
-        { id: 1, name: "Hilton Kinshasa", neighborhood: "Gombe", lat: -4.298516, lng: 15.312124, baseRate: 12.5 },
-        { id: 2, name: "Novotel Kinshasa La Gombe", neighborhood: "Gombe", lat: -4.3040594, lng: 15.3051907, baseRate: 11 },
-        { id: 3, name: "Protea Hotel by Marriott", neighborhood: "Gombe", lat: -4.3026728, lng: 15.2987973, baseRate: 10 },
-        { id: 4, name: "Four Points by Sheraton", neighborhood: "Gombe", lat: -4.3063028, lng: 15.2958413, baseRate: 12 },
-        { id: 5, name: "Ibis Styles Kinshasa", neighborhood: "Gombe", lat: -4.3028341, lng: 15.3118844, baseRate: 9 },
-        { id: 6, name: "Hôtel Eden", neighborhood: "Shaumba", lat: -4.3247199, lng: 15.2863994, baseRate: 6 },
-        { id: 7, name: "Hotel Platinum", neighborhood: "Gombe", lat: -4.3063736, lng: 15.3161236, baseRate: 7.5 },
-        { id: 8, name: "Hotel Royal", neighborhood: "Gombe", lat: -4.3058989, lng: 15.3058853, baseRate: 8 },
-        { id: 9, name: "Ixoras Hôtel Lemba", neighborhood: "Lemba", lat: -4.3794887, lng: 15.3348532, baseRate: 5.5 },
-        { id: 10, name: "La Treizième", neighborhood: "Limete", lat: -4.3608932, lng: 15.3385257, baseRate: 6 },
-        { id: 11, name: "Ixoras Hôtel Limete", neighborhood: "Limete", lat: -4.351661, lng: 15.3338265, baseRate: 6.5 },
-        { id: 12, name: "Hôtel Stella", neighborhood: "Debonhomme", lat: -4.38416, lng: 15.3571995, baseRate: 9 },
-        { id: 13, name: "Leon Hotel", neighborhood: "Gombe", lat: -4.3030977, lng: 15.3139028, baseRate: 10.5 },
-        { id: 14, name: "Fleuve Congo Hotel", neighborhood: "Gombe", lat: -4.312714, lng: 15.2703285, baseRate: 14 }
+            const HOTELS = [
+        { id: 1, name: "Hilton Kinshasa", neighborhood: "Gombe", lat: -4.298516, lng: 15.312124, baseRate: 12.5, address: "Avenue Colonel Mondjiba, Gombe, Kinshasa", landmarks: "En face du Palais du Peuple, à 200 m du Boulevard du 30 Juin" },
+        { id: 2, name: "Novotel Kinshasa La Gombe", neighborhood: "Gombe", lat: -4.3040594, lng: 15.3051907, baseRate: 11, address: "Avenue du Port, Gombe, Kinshasa", landmarks: "Près de la Gare Centrale, en face du Marché Central" },
+        { id: 3, name: "Protea Hotel by Marriott", neighborhood: "Gombe", lat: -4.3026728, lng: 15.2987973, baseRate: 10, address: "Avenue de l'Équateur, Gombe, Kinshasa", landmarks: "À côté de l'Ambassade de Belgique, 100 m de l'INSS" },
+        { id: 4, name: "Four Points by Sheraton", neighborhood: "Gombe", lat: -4.3063028, lng: 15.2958413, baseRate: 12, address: "Avenue du 30 Juin, Gombe, Kinshasa", landmarks: "Face à l'Hôtel de Ville, angle Boulevard du 30 Juin" },
+        { id: 5, name: "Ibis Styles Kinshasa", neighborhood: "Gombe", lat: -4.3028341, lng: 15.3118844, baseRate: 9, address: "Boulevard du 30 Juin, Gombe, Kinshasa", landmarks: "En face de la BCDC, à 50 m de la Place de la Gare" },
+        { id: 6, name: "Hôtel Eden", neighborhood: "Shaumba", lat: -4.3247199, lng: 15.2863994, baseRate: 6, address: "Avenue Kasa-Vubu, Shaumba, Kinshasa", landmarks: "Croisement Huileries, en diagonale de l'Église Notre-Dame du Congo" },
+        { id: 7, name: "Hotel Platinum", neighborhood: "Gombe", lat: -4.3063736, lng: 15.3161236, baseRate: 7.5, address: "Avenue des Aviateurs, Gombe, Kinshasa", landmarks: "Zone des diplomates, accès rapide depuis l'aéroport de N'Djili" },
+        { id: 8, name: "Hotel Royal", neighborhood: "Gombe", lat: -4.3058989, lng: 15.3058853, baseRate: 8, address: "Avenue de la Justice, Gombe, Kinshasa", landmarks: "Derrière le Palais de Justice, à 150 m du Boulevard du 30 Juin" },
+        { id: 9, name: "Ixoras Hôtel Lemba", neighborhood: "Lemba", lat: -4.3794887, lng: 15.3348532, baseRate: 5.5, address: "Avenue de l'Université, Lemba, Kinshasa", landmarks: "Face à l'UNIKIN (Université de Kinshasa), près du Rond-point Ngaba" },
+        { id: 10, name: "La Treizième", neighborhood: "Limete", lat: -4.3608932, lng: 15.3385257, baseRate: 6, address: "Boulevard Lumumba, Limete, Kinshasa", landmarks: "À 100 m du Stade des Martyrs, en face de l'Usine de la Limete" },
+        { id: 11, name: "Ixoras Hôtel Limete", neighborhood: "Limete", lat: -4.351661, lng: 15.3338265, baseRate: 6.5, address: "Avenue Industrielle, Limete, Kinshasa", landmarks: "Croisement 13ème Rue, près du Marché de la Liberté" },
+        { id: 12, name: "Hôtel Stella", neighborhood: "Debonhomme", lat: -4.38416, lng: 15.3571995, baseRate: 9, address: "Avenue Debonhomme, Kalamu, Kinshasa", landmarks: "En face de l'Hôpital Général de Référence, près du Marché Zando" },
+        { id: 13, name: "Leon Hotel", neighborhood: "Gombe", lat: -4.3030977, lng: 15.3139028, baseRate: 10.5, address: "Avenue du Port, Gombe, Kinshasa", landmarks: "À côté du Novotel La Gombe, 200 m du Port de Kinshasa" },
+        { id: 14, name: "Fleuve Congo Hotel", neighborhood: "Gombe", lat: -4.312714, lng: 15.2703285, baseRate: 14, address: "Boulevard du 30 Juin, Gombe, Kinshasa", landmarks: "En bordure du Fleuve Congo, face au Beach Ngobila" }
       ];
       const HOTSPOTS = [
         { name: "K Lounge", lat: -4.3128152, lng: 15.2851609 }, { name: "La Villa Hesbaye", lat: -4.3173385, lng: 15.287746 },
