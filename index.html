@@ -296,6 +296,45 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
+  // ===== Service Worker Registration =====
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW registration failed:', err); });
+  }
+
+  // ===== Storage Layer (localStorage fallback) =====
+  window.storage = {
+    async get(key) {
+      try {
+        const value = localStorage.getItem(key);
+        return value !== null ? { value } : null;
+      } catch (e) {
+        console.error('storage.get error:', e);
+        return null;
+      }
+    },
+    async set(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        console.error('storage.set error:', e);
+        return false;
+      }
+    },
+    async remove(key) {
+      try {
+        localStorage.removeItem(key);
+        return true;
+      } catch (e) {
+        console.error('storage.remove error:', e);
+        return false;
+      }
+    }
+  };
+</script>
+<script>
   window.addEventListener('error', function (e) {
     try {
       const banner = document.getElementById('errorBanner');
