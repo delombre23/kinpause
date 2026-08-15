@@ -676,9 +676,6 @@
         if (summary) summary.textContent = 'Itinéraire…';
         await drawRoute(hotel);
       };
-
-      window.openRoomAmenities = function (roomId) {
-
       window.openRoomAmenities = function (roomId) {
         const hotel = HOTELS.find(h => h.id === selectedHotelId);
         const room = hotel ? roomsForHotel(hotel).find(r => r.id === roomId) : null;
