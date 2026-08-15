@@ -131,7 +131,8 @@
   .room-card-beds { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
   .room-card-beds svg { width: 15px; height: 15px; flex-shrink: 0; }
   .room-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .room-badge { display: flex; align-items: center; gap: 5px; background: var(--card-hi); padding: 5px 10px 5px 8px; border-radius: 100px; font-size: 10.5px; color: var(--text); }
+    .room-badge { display: flex; align-items: center; justify-content: center; background: var(--card-hi); width: 28px; height: 28px; border-radius: 50%; color: var(--text); }
+  .room-badge svg { width: 14px; height: 14px; flex-shrink: 0; }
   .room-badge svg { width: 12.5px; height: 12.5px; flex-shrink: 0; }
   .room-amenities-link { font-size: 12px; color: var(--text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; margin-bottom: 13px; display: inline-block; }
   .room-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -201,7 +202,9 @@
   .amenity-cat-heading:first-of-type { margin-top: 0; }
   .amenity-list { list-style: none; }
   .amenity-list li { font-size: 13px; padding: 5px 0; display: flex; align-items: center; gap: 9px; }
-  .amenity-list li svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--text); }
+    .amenity-list li svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--text); }
+  .amenity-list li { font-size: 13.5px; padding: 7px 0; }
+  .amenity-cat-heading { font-size: 11px; letter-spacing: 0.1em; margin: 20px 0 10px; }
 
     #accountModal { display: none; }
 
@@ -660,7 +663,7 @@
                 <div class="room-card-body">
                   <p class="room-card-title">${r.accommodationType}</p>
                   <p class="room-card-beds">${amenityIconSvg('check')}${r.bedConfig}</p>
-                  <div class="room-badge-row">${keyBadgesForRoom(r).map(a => `<span class="room-badge">${amenityIconSvg(a.icon)}${a.label}</span>`).join('')}</div>
+                  <div class="room-badge-row">${keyBadgesForRoom(r).map(a => `<span class="room-badge" title="${a.label}">${amenityIconSvg(a.icon)}</span>`).join('')}</div>
                   <button class="room-amenities-link" onclick="openRoomAmenities(${r.id})">Voir tous les équipements ›</button>
                   <div class="room-card-footer">
                     <span class="room-card-price">$${r.pricePerHour}/h</span>
