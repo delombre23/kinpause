@@ -201,7 +201,13 @@
   .amenity-list li { font-size: 13px; padding: 5px 0; display: flex; align-items: center; gap: 9px; }
   .amenity-list li svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--text); }
 
-  #accountModal { display: none; }
+    #accountModal { display: none; }
+
+  .route-summary { cursor: pointer; }
+  .route-summary:active { transform: scale(0.96); background: var(--card-hi); }
+  .address-block { margin-bottom: 15px; margin-top: -5px; }
+  .address-line { font-size: 12.5px; color: var(--text); font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
+  .landmarks-line { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
 </style>
 </head>
 <body>
@@ -441,11 +447,24 @@
       const BED_ICON_MARKER = '<path d="M3 17v-5a2 2 0 012-2h14a2 2 0 012 2v5M3 17v2M21 17v2M5 10V7a2 2 0 012-2h3a2 2 0 012 2v3M12 10V8a2 2 0 012-2h3a2 2 0 012 2v2"/>';
       function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
 
-      function addHotelMarker(hotel) {
+            function addHotelMarker(hotel) {
         const glow = L.circleMarker([hotel.lat, hotel.lng], { radius: 16, fillColor: '#FFFFFF', fillOpacity: 0.12, stroke: false, interactive: true }).addTo(map);
         const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, keyboard: false }).addTo(map);
         glow.bindTooltip(hotel.name, { permanent: true, direction: 'right', offset: [17, 0], className: 'hotel-label', opacity: 1 });
+
         glow.on('click', function (e) { try { L.DomEvent.stopPropagation(e); } catch (err) {} selectHotel(hotel.id); });
+
+        glow.on('dblclick', function (e) {
+          try { L.DomEvent.stopPropagation(e); } catch (err) {}
+          if (userLocation) {
+            selectHotel(hotel.id);
+            setTimeout(() => drawRoute(hotel), 300);
+          } else {
+            showToast("Localisez-vous d'abord pour voir l'itinéraire");
+            locateUser();
+          }
+        });
+
         hotelMarkers[hotel.id] = { glow, badge };
       }
       HOTELS.forEach(addHotelMarker);
@@ -616,7 +635,11 @@
           <p class="eyebrow">${hotel.neighborhood}, Kinshasa</p>
           <h2 class="detail-title">${hotel.name}</h2>
           <span class="rating-badge">${rating} · ${ratingLabel(rating)}</span>
-          ${userLocation ? `<span class="route-summary" id="routeSummary">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))}</span>` : ''}
+          ${userLocation ? `<button type="button" class="route-summary" id="routeSummary" onclick="triggerRouteFromSheet(${hotel.id})">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))} · estimation</button>` : ''}
+          <div class="address-block">
+            <p class="address-line">${hotel.address || ''}</p>
+            ${hotel.landmarks ? `<p class="landmarks-line">${hotel.landmarks}</p>` : ''}
+          </div>
           <p class="hotel-description">${hotelDescription(hotel)}</p>
           <p class="facilities-heading">Équipements de l'hôtel</p>
           <div class="facilities-grid">${facilitiesForHotel(hotel).map(f => `<span class="facility-item">${facilityIconSvg(f.key)}<span>${f.label}</span></span>`).join('')}</div>
@@ -641,6 +664,20 @@
           <p class="demo-note">Prototype — aucune donnée n'est envoyée à un vrai hôtel.</p>
         `;
       }
+      window.triggerRouteFromSheet = async function(hotelId) {
+        const hotel = HOTELS.find(h => h.id === hotelId);
+        if (!hotel) return;
+        if (!userLocation) {
+          showToast("Localisez-vous d'abord pour voir l'itinéraire");
+          locateUser();
+          return;
+        }
+        const summary = document.getElementById('routeSummary');
+        if (summary) summary.textContent = 'Itinéraire…';
+        await drawRoute(hotel);
+      };
+
+      window.openRoomAmenities = function (roomId) {
 
       window.openRoomAmenities = function (roomId) {
         const hotel = HOTELS.find(h => h.id === selectedHotelId);
@@ -787,16 +824,72 @@
       window.closeReceiptModal = function(){ document.getElementById('receiptModal').style.display='none'; };
       window.downloadCurrentReceipt = function(){ if(currentModalReceipt) triggerReceiptDownload(currentModalReceipt); };
 
-      function drawRoute(hotel) {
-        if (routeLayer) map.removeLayer(routeLayer);
-        const pts = simulatedRoutePoints(userLocation, hotel);
-        routeLayer = L.polyline(pts, { color: '#FFFFFF', weight: 4, opacity: 0.8, dashArray: '2 9', lineCap: 'round', lineJoin: 'round' }).addTo(map);
-        const km = haversineDistance(userLocation.lat, userLocation.lng, hotel.lat, hotel.lng);
-        const el = document.getElementById('routeSummary');
-        if (el) el.textContent = formatDist(km) + ' · estimation';
-        const b = L.latLngBounds(pts);
-        const sheetPx = Math.round(window.innerHeight * 0.84) + 20;
-        map.fitBounds(b, { paddingTopLeft: [40, 90], paddingBottomRight: [40, sheetPx] });
+            async function fetchRealRoute(from, to) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.routes || !data.routes.length) throw new Error('No route found');
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        const duration = data.routes[0].duration;
+        return { coords, duration };
+      }
+
+      async function drawRoute(hotel) {
+        try {
+          if (routeLayer) map.removeLayer(routeLayer);
+
+          let coords = [];
+          let duration = null;
+          let isRealRoute = false;
+          const startPoint = userLocation || KINSHASA_CENTER;
+
+          if (userLocation) {
+            try {
+              const realRoute = await fetchRealRoute(userLocation, hotel);
+              if (realRoute && realRoute.coords.length > 0) {
+                coords = realRoute.coords;
+                duration = realRoute.duration;
+                isRealRoute = true;
+              }
+            } catch (e) {
+              console.warn('Real routing failed, using fallback', e);
+            }
+          }
+
+          if (!isRealRoute) {
+            coords = simulatedRoutePoints(startPoint, hotel);
+          }
+
+          routeLayer = L.polyline(coords, {
+            color: '#FFFFFF',
+            weight: 4,
+            opacity: 0.9,
+            dashArray: isRealRoute ? null : '2 9',
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+
+          const km = haversineDistance(startPoint.lat, startPoint.lng, hotel.lat, hotel.lng);
+
+          const el = document.getElementById('routeSummary');
+          if (el) {
+            let text = formatDist(km);
+            if (duration) {
+              const mins = Math.round(duration / 60);
+              text += ` · ${mins} min`;
+            } else {
+              text += ' · estimation';
+            }
+            el.textContent = text;
+          }
+
+          const b = L.latLngBounds(coords);
+          const sheetPx = Math.round(window.innerHeight * 0.84) + 20;
+          map.fitBounds(b, { paddingTopLeft: [40, 90], paddingBottomRight: [40, sheetPx] });
+        } catch (e) {
+          console.error('drawRoute error:', e);
+        }
       }
 
       function locateUser() {
