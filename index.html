@@ -1505,14 +1505,56 @@
         document.getElementById('legalModal').classList.add('show');
         trapFocus(document.getElementById('legalModal'));
       };
-            window.closeLegalModal = function () {
+                  window.closeLegalModal = function () {
         releaseFocus();
         document.getElementById('legalModal').classList.remove('show');
       };
 
+      // ===== Focus Trap & Escape =====
+      let activeModal = null;
+      const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+      function trapFocus(modal) {
+        activeModal = modal;
+        const focusable = Array.from(modal.querySelectorAll(focusableSelector))
+          .filter(el => !el.disabled && el.offsetParent !== null);
+        if (focusable.length) setTimeout(() => focusable[0].focus(), 0);
+      }
+
+      function releaseFocus() {
+        activeModal = null;
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (activeModal) {
+            if (activeModal.id === 'receiptModal') closeReceiptModal();
+            else if (activeModal.id === 'accountModal') closeAccountModal();
+            else if (activeModal.id === 'roomAmenitiesModal') closeRoomAmenities();
+            else if (activeModal.id === 'legalModal') closeLegalModal();
+            else activeModal.style.display = 'none';
+            releaseFocus();
+          } else if (sheetMode !== 'hidden') {
+            closeSheet();
+          }
+        }
+        if (e.key === 'Tab' && activeModal) {
+          const focusable = Array.from(activeModal.querySelectorAll(focusableSelector))
+            .filter(el => !el.disabled && el.offsetParent !== null);
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
       map.on('zoomend', checkInstitutionalView);
-      init();
-    })();
   }
 </script>
 <!-- Institutional Overlay -->
