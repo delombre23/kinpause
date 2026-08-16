@@ -217,6 +217,9 @@
 
   .route-summary { cursor: pointer; }
   .route-summary:active { transform: scale(0.96); background: var(--card-hi); }
+  .google-maps-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; background: var(--card); color: var(--text); padding: 6px 13px; border-radius: 100px; font-weight: 500; margin-bottom: 15px; border: 1px solid var(--border); transition: transform 0.15s ease; }
+  .google-maps-btn:active { transform: scale(0.96); background: var(--card-hi); }
+  .google-maps-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
   .address-block { margin-bottom: 15px; margin-top: -5px; }
   .address-line { font-size: 12.5px; color: var(--text); font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
   .landmarks-line { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
@@ -516,7 +519,12 @@
           try { L.DomEvent.stopPropagation(e); } catch (err) {}
           if (userLocation) {
             selectHotel(hotel.id);
-            setTimeout(() => drawRoute(hotel), 300);
+            setTimeout(() => {
+              drawRoute(hotel);
+              // Ajuste la vue pour afficher tout l'itinéraire avec padding
+              const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
+              map.fitBounds(bounds, { padding: [50, 50] });
+            }, 300);
           } else {
             showToast("Localisez-vous d'abord pour voir l'itinéraire");
             locateUser();
@@ -695,12 +703,19 @@
 
       function renderHotelRooms(hotel) {
         const rooms = roomsForHotel(hotel); const rating = hotelRating(hotel);
+        const googleMapsLink = userLocation
+          ? `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${hotel.lat},${hotel.lng}&travelmode=driving`
+          : `https://www.google.com/maps/dir/?api=1&destination=${hotel.lat},${hotel.lng}&travelmode=driving`;
         sheetContent.innerHTML = `
           <button class="back-btn" onclick="collapseSheet()">‹ Retour aux hôtels à proximité</button>
           <p class="eyebrow">${hotel.neighborhood}, Kinshasa</p>
           <h2 class="detail-title">${hotel.name}</h2>
           <span class="rating-badge">${rating} · ${ratingLabel(rating)}</span>
           ${userLocation ? `<button type="button" class="route-summary" id="routeSummary" onclick="triggerRouteFromSheet(${hotel.id})">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))} · estimation</button>` : ''}
+          <a href="${googleMapsLink}" target="_blank" rel="noopener" class="google-maps-btn" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s-7 6-7 11a7 7 0 0014 0c0-5-7-11-7-11z"/><circle cx="12" cy="13" r="2.5"/><path d="M12 21.5V24M9 20l-3 3M15 20l3 3"/></svg>
+            Ouvrir dans Google Maps
+          </a>
           <div class="address-block">
             <p class="address-line">${hotel.address || ''}</p>
             ${hotel.landmarks ? `<p class="landmarks-line">${hotel.landmarks}</p>` : ''}
@@ -740,6 +755,9 @@
         const summary = document.getElementById('routeSummary');
         if (summary) summary.textContent = 'Itinéraire…';
         await drawRoute(hotel);
+        // Ajuste la vue pour afficher tout l'itinéraire
+        const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
+        map.fitBounds(bounds, { padding: [50, 50] });
       };
       window.openRoomAmenities = function (roomId) {
         const hotel = HOTELS.find(h => h.id === selectedHotelId);
@@ -947,9 +965,9 @@
             el.textContent = text;
           }
 
-          const b = L.latLngBounds(coords);
-          const sheetPx = Math.round(window.innerHeight * 0.84) + 20;
-          map.fitBounds(b, { paddingTopLeft: [40, 90], paddingBottomRight: [40, sheetPx] });
+          // Utilise fitBounds avec padding uniforme pour afficher tout l'itinéraire
+          const routeBounds = L.latLngBounds(coords);
+          map.fitBounds(routeBounds, { padding: [50, 50] });
         } catch (e) {
           console.error('drawRoute error:', e);
         }
