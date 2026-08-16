@@ -176,7 +176,7 @@
   .reserve-btn:active, .receipt-btn:active, .ghost-btn:active { transform: scale(0.96); }
   .reserve-btn { background: #FFFFFF; color: #121212; }
   .receipt-btn { background: #FFFFFF; color: #121212; margin-top: 10px; }
-  .ghost-btn { background: transparent; border: 1.5px solid var(--border); color: var(--text); margin-top: 10px; font-weight: 600; font-size: 13px; padding: 12px; }
+  .preset-btn.active { background: #FFFFFF; color: #121212; font-weight: 700; border-color: transparent; }
   .confirm-msg { margin-top: 13px; padding: 13px 15px; background: var(--card); color: var(--text); border-radius: 12px; font-size: 12.5px; font-weight: 500; line-height: 1.5; }
   .demo-note { margin-top: 17px; font-size: 10.5px; color: var(--text-muted); line-height: 1.4; }
 
@@ -683,6 +683,7 @@
       function hotelDescription(hotel) { return DESC_TEMPLATES[hotel.id % DESC_TEMPLATES.length](hotel); }
 
       let selectedStartTime = null, selectedEndTime = null;
+      let selectedDuration = 2;
       let selectedHotelId = null, selectedRoomId = null, sortMode = 'distance';
       let userLocation = null, locationState = 'idle';
       let userMarker = null, routeLayer = null;
@@ -793,49 +794,51 @@
       }
       function hourAngle(h) { return (h / 24) * 360; }
       function timeToHourFloat(hhmm) { const parts = hhmm.split(':').map(Number); return parts[0] + parts[1]/60; }
-      function slotHours() { const s = timeToHourFloat(selectedStartTime); let e = timeToHourFloat(selectedEndTime); if (e <= s) e += 24; return Math.max(0.5, e - s); }
+      function slotHours() { return Math.max(0.5, selectedDuration); }
       function renderDial() {
-        const startHour = timeToHourFloat(selectedStartTime), hours = slotHours();
-        const cx=60, cy=60, r=46;
-        const dayPath = arcPath(hourAngle(6), hourAngle(18), cx, cy, r);
-        const night1 = arcPath(hourAngle(18), hourAngle(24), cx, cy, r);
-        const night2 = arcPath(hourAngle(0), hourAngle(6), cx, cy, r);
-        const selectPath = arcPath(hourAngle(startHour), hourAngle(startHour + hours), cx, cy, r);
-        return `<svg viewBox="0 0 120 120" class="dial">
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#FFFFFF1A" stroke-width="9" />
-          <path d="${dayPath}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.35" />
-          <path d="${night1}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.12" />
-          <path d="${night2}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.12" />
-          <path d="${selectPath}" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" />
-          <text x="60" y="55" text-anchor="middle" class="dial-label-main">${selectedStartTime}</text>
-          <text x="60" y="69" text-anchor="middle" class="dial-label-sub">à ${selectedEndTime}</text>
-        </svg>`;
+        const hours = Math.floor(selectedDuration);
+        const minutes = Math.round((selectedDuration - hours) * 60);
+        const durationText = minutes > 0 ? `${hours}h${String(minutes).padStart(2,'0')}` : `${hours}h`;
+        return `<div style="text-align:center;padding:12px 0;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;">${durationText}</div>
+          <div style="font-size:12.5px;color:var(--text-muted);margin-top:4px;font-weight:500;">Durée de votre shortstay</div>
+        </div>`;
       }
 
       function roundToHalfHour(date) { const ms = 1000*60*30; return new Date(Math.ceil(date.getTime()/ms)*ms); }
       function fmtHHMM(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
-      function initTimeSlot() { const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + 2*3600000); selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end); }
-            window.applyPreset = function (hours) {
-        const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + hours*3600000);
-        selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end);
+      function initTimeSlot() { selectedDuration = 2; selectedStartTime = null; selectedEndTime = null; }
+                  window.applyPreset = function (hours) {
+        selectedDuration = hours;
+        const sel = document.getElementById('customDurationSelector');
+        if (sel) sel.style.display = 'none';
         refreshRoomDetail();
       };
       window.applyCustom = function () {
-        const startInput = document.getElementById('startTimeInput');
-        if (startInput) {
-          startInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => startInput.focus(), 350);
-        }
+        const sel = document.getElementById('customDurationSelector');
+        if (sel) sel.style.display = sel.style.display === 'none' ? 'block' : 'none';
       };
-      window.onTimeInputChange = function () {
-        const s = document.getElementById('startTimeInput').value, e = document.getElementById('endTimeInput').value;
-        if (s) selectedStartTime = s; if (e) selectedEndTime = e;
+      window.onCustomDurationChange = function () {
+        const h = parseInt(document.getElementById('customHours').value) || 0;
+        const m = parseInt(document.getElementById('customMinutes').value) || 0;
+        selectedDuration = h + m / 60;
         refreshRoomDetail();
       };
       function refreshRoomDetail() {
         const hotel = HOTELS.find(h => h.id === selectedHotelId);
         const room = hotel ? roomsForHotel(hotel).find(r => r.id === selectedRoomId) : null;
-        if (hotel && room) renderRoomDetail(hotel, room);
+        if (!hotel || !room) return;
+        const dialWrap = document.querySelector('.dial-wrap');
+        if (dialWrap) dialWrap.innerHTML = renderDial();
+        const presets = document.querySelectorAll('.preset-btn');
+        if (presets.length) {
+          const isCustom = selectedDuration !== 2 && selectedDuration !== 4 && selectedDuration !== 10;
+          presets[0].classList.toggle('active', selectedDuration === 2);
+          presets[1].classList.toggle('active', selectedDuration === 4);
+          presets[2].classList.toggle('active', isCustom);
+          presets[3].classList.toggle('active', selectedDuration === 10);
+        }
+        updatePriceBreakdown(room);
       }
 
       function openSheetPeek() { sheetMode = 'list'; sheetEl.classList.remove('expanded'); sheetEl.classList.add('peek'); locateBtn.classList.remove('hidden'); locateBtn.classList.add('raised'); sheetEl.style.display = 'flex'; }
@@ -977,13 +980,14 @@
       };
       window.closeRoomAmenities = function () { document.getElementById('roomAmenitiesModal').style.display = 'none'; };
 
-      window.selectRoom = function (roomId) {
+            window.selectRoom = function (roomId) {
         try {
           const hotel = HOTELS.find(h => h.id === selectedHotelId);
           if (!hotel) throw new Error('No hotel selected');
           const room = roomsForHotel(hotel).find(r => r.id === roomId);
           if (!room) throw new Error('Room not found: ' + roomId);
-          selectedRoomId = roomId; initTimeSlot();
+          selectedRoomId = roomId;
+          initTimeSlot();
           renderRoomDetail(hotel, room);
         } catch (e) {
           console.error('selectRoom error:', e);
@@ -996,7 +1000,11 @@
         if (hotel) { try { renderHotelRooms(hotel); } catch (e) { console.error(e); } } else closeSheet();
       };
 
-      function renderRoomDetail(hotel, room) {
+            function renderRoomDetail(hotel, room) {
+        const isCustomActive = selectedDuration !== 2 && selectedDuration !== 4 && selectedDuration !== 10;
+        const hoursOptions = [0,1,2,3,4,5,6,7,8,9,10,11,12].map(v => `<option value="${v}" ${Math.floor(selectedDuration) === v ? 'selected' : ''}>${v} h</option>`).join('');
+        const minutesOptions = [0,15,30,45].map(v => `<option value="${v}" ${Math.round((selectedDuration % 1) * 60) === v ? 'selected' : ''}>${v} min</option>`).join('');
+
         sheetContent.innerHTML = `
           <button class="back-btn" onclick="backToRooms()">‹ Retour aux chambres</button>
           <p class="eyebrow">${hotel.name}</p>
@@ -1007,17 +1015,25 @@
             <div class="room-photo" style="background:${photoGradient(1)}">${photoSvg('bath')}<img class="room-photo-img" src="${roomPhotoSrc(room.id, 1)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
             <div class="room-photo" style="background:${photoGradient(2)}">${photoSvg('view')}<img class="room-photo-img" src="${roomPhotoSrc(room.id, 2)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
           </div>
-          <p class="time-heading">Choisissez votre créneau</p>
+          <p class="time-heading">Choisissez la durée</p>
           <div class="dial-wrap">${renderDial()}</div>
           <div class="preset-row">
-            <button class="preset-btn" onclick="applyPreset(2)">2h</button>
-            <button class="preset-btn" onclick="applyPreset(3)">3h</button>
-            <button class="preset-btn" onclick="applyCustom()">Personnalisé</button>
-            <button class="preset-btn" onclick="applyPreset(10)">Nuit</button>
+            <button class="preset-btn ${selectedDuration === 2 ? 'active' : ''}" onclick="applyPreset(2)">2h</button>
+            <button class="preset-btn ${selectedDuration === 4 ? 'active' : ''}" onclick="applyPreset(4)">4h</button>
+            <button class="preset-btn ${isCustomActive ? 'active' : ''}" onclick="applyCustom()">Personnalisé</button>
+            <button class="preset-btn ${selectedDuration === 10 ? 'active' : ''}" onclick="applyPreset(10)">Nuit</button>
           </div>
-          <div class="time-row">
-            <div class="time-field"><label>Début</label><input type="time" id="startTimeInput" value="${selectedStartTime}" onchange="onTimeInputChange()"></div>
-            <div class="time-field"><label>Fin</label><input type="time" id="endTimeInput" value="${selectedEndTime}" onchange="onTimeInputChange()"></div>
+          <div id="customDurationSelector" style="display:${isCustomActive ? 'block' : 'none'}; margin-bottom:14px;">
+            <div class="time-row">
+              <div class="time-field">
+                <label>Heures</label>
+                <select id="customHours" class="ob-input" style="padding:11px 12px;" onchange="onCustomDurationChange()">${hoursOptions}</select>
+              </div>
+              <div class="time-field">
+                <label>Minutes</label>
+                <select id="customMinutes" class="ob-input" style="padding:11px 12px;" onchange="onCustomDurationChange()">${minutesOptions}</select>
+              </div>
+            </div>
           </div>
           <div class="price-breakdown" id="priceBreakdown"></div>
           <button class="reserve-btn" id="reserveBtn" onclick="reserve()">Demander la réservation</button>
@@ -1040,24 +1056,87 @@
         `;
       }
 
-      window.reserve = async function () {
+            window.reserve = function () {
         const hotel = HOTELS.find(h => h.id === selectedHotelId);
         const room = hotel ? roomsForHotel(hotel).find(r => r.id === selectedRoomId) : null;
         if (!hotel || !room) return;
+
+        const confirmArea = document.getElementById('confirmArea');
+        if (!confirmArea) return;
+
+        const now = new Date();
+        const defaultStart = fmtHHMM(roundToHalfHour(now));
+
+        confirmArea.innerHTML = `
+          <div style="margin-top:16px; animation: instFadeIn 0.3s ease;">
+            <p class="time-heading">Quand souhaitez-vous commencer ?</p>
+            <div class="time-row">
+              <div class="time-field">
+                <label>Heure de début</label>
+                <input type="time" id="startTimeInput" value="${defaultStart}" style="font-family:'IBM Plex Mono',monospace;">
+              </div>
+            </div>
+            <button class="reserve-btn" onclick="confirmReservation()" style="margin-top:12px;">Confirmer la réservation</button>
+            <button class="ghost-btn" onclick="cancelReservationFlow()" style="margin-top:8px;">Annuler</button>
+          </div>
+        `;
+
+        const btn = document.getElementById('reserveBtn');
+        if (btn) btn.style.display = 'none';
+      };
+
+      window.cancelReservationFlow = function () {
+        const confirmArea = document.getElementById('confirmArea');
+        if (confirmArea) confirmArea.innerHTML = '';
+        const btn = document.getElementById('reserveBtn');
+        if (btn) btn.style.display = 'block';
+      };
+
+      window.confirmReservation = async function () {
+        const startInput = document.getElementById('startTimeInput');
+        const startTime = startInput ? startInput.value : '';
+        if (!startTime) { showToast("Veuillez choisir une heure de début"); return; }
+
+        const [h, m] = startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(h, m, 0, 0);
+        const endDate = new Date(startDate.getTime() + selectedDuration * 3600000);
+        selectedStartTime = startTime;
+        selectedEndTime = fmtHHMM(endDate);
+
+        const hotel = HOTELS.find(h => h.id === selectedHotelId);
+        const room = hotel ? roomsForHotel(hotel).find(r => r.id === selectedRoomId) : null;
+        if (!hotel || !room) return;
+
         const hours = slotHours();
         const price = +(room.pricePerHour * hours).toFixed(2);
-        const request = { code: generateReceiptCode(), username: currentAccount ? currentAccount.username : '', birthdate: currentAccount ? currentAccount.birthdate : '', hotel: hotel.name, room: room.accommodationType, roomNumber: room.roomNumber, timeSlot: `${selectedStartTime} - ${selectedEndTime}`, price, time: new Date().toISOString() };
+        const request = {
+          code: generateReceiptCode(),
+          username: currentAccount ? currentAccount.username : '',
+          birthdate: currentAccount ? currentAccount.birthdate : '',
+          hotel: hotel.name,
+          room: room.accommodationType,
+          roomNumber: room.roomNumber,
+          timeSlot: `${selectedStartTime} - ${selectedEndTime}`,
+          price,
+          time: new Date().toISOString()
+        };
+
         try {
           let list = [];
-          try { const existing = await window.storage.get('kin_requests'); if (existing && existing.value) list = JSON.parse(existing.value); } catch (e) {}
+          try {
+            const existing = await window.storage.get('kin_requests');
+            if (existing && existing.value) list = JSON.parse(existing.value);
+          } catch (e) {}
           list.push(request);
           await window.storage.set('kin_requests', JSON.stringify(list));
         } catch (e) { console.error('Storage error', e); }
+
         lastReceipt = request;
         const confirmArea = document.getElementById('confirmArea');
-        if (confirmArea) confirmArea.innerHTML = `<div class="confirm-msg">✓ Envoyé — ${hotel.name}, ${room.accommodationType} confirmera bientôt.</div><button class="ghost-btn" onclick="viewLastReceipt()">Revoir le reçu</button>`;
-        const btn = document.getElementById('reserveBtn'); if (btn) btn.style.display = 'none';
-        openReceiptModal(request);
+        if (confirmArea) {
+          confirmArea.innerHTML = `<div class="confirm-msg">✓ Envoyé — ${hotel.name}, ${room.accommodationType} confirmera bientôt.</div><button class="ghost-btn" onclick="viewLastReceipt()">Revoir le reçu</button>`;
+        }
       };
 
       function generateReceiptCode() { const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<8;i++) c+=chars[Math.floor(Math.random()*chars.length)]; return c.slice(0,4)+'-'+c.slice(4); }
