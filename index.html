@@ -498,7 +498,7 @@
       const sheetContent = document.getElementById('sheetContent');
       const locateBtn = document.getElementById('locateBtn');
 
-      const map = L.map('map', { zoomControl: false, attributionControl: false });
+      const map = L.map('map', { zoomControl: false, attributionControl: false, doubleClickZoom: false });
       L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
       const KINSHASA_CENTER = [-4.325, 15.322];
@@ -513,20 +513,29 @@
         const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, keyboard: false }).addTo(map);
         glow.bindTooltip(hotel.name, { permanent: true, direction: 'right', offset: [17, 0], className: 'hotel-label', opacity: 1 });
 
-        glow.on('click', function (e) { try { L.DomEvent.stopPropagation(e); } catch (err) {} selectHotel(hotel.id); });
-
-        glow.on('dblclick', function (e) {
+                // Gestion manuelle du clic vs double-clic
+        let clickTimer = null;
+        glow.on('click', function (e) {
           try { L.DomEvent.stopPropagation(e); } catch (err) {}
-          if (userLocation) {
-            // Ferme le sheet s'il est ouvert pour ne voir que la carte
-            closeSheet();
-            // Affiche uniquement l'itinéraire sur la carte
-            drawRoute(hotel);
-            const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
-            map.fitBounds(bounds, { padding: [50, 50] });
+          if (clickTimer) {
+            // Double-clic détecté
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            if (userLocation) {
+              closeSheet();
+              drawRoute(hotel);
+              const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
+              map.fitBounds(bounds, { padding: [50, 50] });
+            } else {
+              showToast("Localisez-vous d'abord pour voir l'itinéraire");
+              locateUser();
+            }
           } else {
-            showToast("Localisez-vous d'abord pour voir l'itinéraire");
-            locateUser();
+            // Simple clic — attendre pour confirmer que ce n'est pas un double-clic
+            clickTimer = setTimeout(() => {
+              clickTimer = null;
+              selectHotel(hotel.id);
+            }, 250);
           }
         });
 
