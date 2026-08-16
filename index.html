@@ -915,7 +915,7 @@
           <p class="eyebrow">${hotel.neighborhood}, Kinshasa</p>
           <h2 class="detail-title">${hotel.name}</h2>
           <span class="rating-badge">${rating} · ${ratingLabel(rating)}</span>
-          ${userLocation ? `<button type="button" class="route-summary" id="routeSummary" onclick="triggerRouteFromSheet(${hotel.id})">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))} · ${Math.round(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng) * 8)} min</button>` : ''}
+          ${userLocation ? `<button type="button" class="route-summary" id="routeSummary" onclick="triggerRouteFromSheet(${hotel.id})">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))} · ${Math.round(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng) * 10)} min</button>` : ''}
           <a href="${googleMapsLink}" target="_blank" rel="noopener" class="google-maps-btn" onclick="event.stopPropagation()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s-7 6-7 11a7 7 0 0014 0c0-5-7-11-7-11z"/><circle cx="12" cy="13" r="2.5"/><path d="M12 21.5V24M9 20l-3 3M15 20l3 3"/></svg>
             Ouvrir dans Google Maps
