@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KinPause">
+<meta name="description" content="Hôtels près de vous — Kinshasa">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>KinPause — Hôtels près de vous</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #121212; --panel: #1A1A1A; --card: #232323; --card-hi: #2C2C2C;
+    --accent: #FFFFFF; --text: #FFFFFF; --text-muted: rgba(255,255,255,0.55); --border: rgba(255,255,255,0.14);
+    --loc-blue: #2582FF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; color: var(--text); overflow: hidden; position: fixed; inset: 0; background: var(--bg-deep); }
+  button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; }
+  input { font-family: inherit; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #errorBanner { position: fixed; top: 0; left: 0; right: 0; z-index: 999; background: #C23B2B; color: white; font-family: monospace; font-size: 11px; padding: 8px 12px; display: none; word-break: break-word; }
+  #kpToast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px); background: #FFFFFF; color: #121212; padding: 13px 20px; border-radius: 12px; font-size: 12.5px; font-weight: 600; max-width: 85vw; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 400; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; }
+  #kpToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #onboarding { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; justify-content: center; background: var(--bg-deep); padding: 34px 26px; overflow-y: auto; }
+  .ob-mark { width: 50px; height: 50px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(255,255,255,0.15); }
+  .ob-eyebrow { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 8px; }
+  .ob-title { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .ob-sub { color: var(--text-muted); font-size: 13.5px; margin-bottom: 28px; line-height: 1.5; }
+  .ob-label { display: block; font-size: 11.5px; color: var(--text-muted); margin-bottom: 7px; margin-top: 18px; letter-spacing: 0.02em; }
+  .ob-input { width: 100%; background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 15px; color: var(--text); font-size: 14.5px; transition: border-color 0.15s ease; }
+  .ob-input:focus { outline: none; border-color: var(--accent); }
+  .ob-error { color: #FF6B5B; font-size: 12.5px; margin-top: 11px; min-height: 16px; }
+  .ob-btn { width: 100%; margin-top: 22px; padding: 16px; background: var(--accent); color: #121212; border-radius: 12px; font-weight: 700; font-size: 14.5px; transition: transform 0.15s ease; }
+  .ob-btn:active { transform: scale(0.97); }
+  .ob-note { margin-top: 18px; font-size: 11.5px; color: var(--text-muted); line-height: 1.55; background: var(--card); padding: 13px 15px; border-radius: 12px; }
+
+  #map { position: fixed; inset: 0; z-index: 0; background: var(--bg-deep); display: none; }
+  .leaflet-tile-pane { filter: invert(93%) hue-rotate(213deg) brightness(0.87) contrast(0.92) saturate(0.85); }
+  .leaflet-control-attribution { font-size: 9px !important; opacity: 0.5; background: rgba(0,0,0,0.4) !important; color: #ccc !important; }
+  .leaflet-control-attribution a { color: #ddd !important; }
+
+  #introOverlay { position: fixed; inset: 0; z-index: 200; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.5s ease, visibility 0.5s ease; }
+  #introOverlay.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+  .intro-mark { width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #3A3A3A, var(--bg-deep) 72%); box-shadow: 0 0 50px 8px rgba(255,255,255,0.1); animation: introPulse 1.6s ease-in-out infinite; }
+  @keyframes introPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .intro-mark { animation: none; } }
+
+  #topBar { position: fixed; top: max(14px, env(safe-area-inset-top)); left: 16px; z-index: 46; display: none; align-items: center; gap: 9px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.5); flex-shrink: 0; transition: transform 0.15s ease; }
+  .avatar:active { transform: scale(0.92); }
+  .brand-label { color: var(--text); font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13.5px; background: rgba(18,18,18,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 9px 15px; border-radius: 100px; border: 1px solid var(--border); }
+
+  #headerMenu { position: fixed; top: max(64px, calc(env(safe-area-inset-top) + 56px)); left: 16px; z-index: 45; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 14px 44px rgba(0,0,0,0.6); padding: 8px; min-width: 240px; display: none; flex-direction: column; gap: 2px; }
+  #headerMenu.show { display: flex; }
+  .menu-item { display: flex; align-items: center; gap: 13px; padding: 12px 13px; border-radius: 11px; font-size: 13.5px; text-align: left; width: 100%; transition: background 0.12s ease; }
+  .menu-item:active { background: var(--card); }
+  .menu-item svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
+  .menu-divider { height: 1px; background: var(--border); margin: 4px 6px; }
+
+  #locateBtn { position: fixed; right: 16px; bottom: 30px; z-index: 40; display: none; width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,0.14); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0,0,0,0.4); align-items: center; justify-content: center; transition: opacity 0.2s ease, transform 0.2s ease, bottom 0.3s ease; }
+  #locateBtn:active { transform: scale(0.92); }
+  #locateBtn.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+  #locateBtn.raised { bottom: 212px; }
+  #locateBtn.loading svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #locateBtn.loading svg { animation: none; } }
+
+  .user-marker-wrap { width: 26px; height: 26px; position: relative; }
+  .user-marker-pulse { position: absolute; inset: -11px; border-radius: 50%; background: rgba(37,130,255,0.32); animation: pulse 2.2s infinite ease-out; }
+  .user-marker-dot { position: absolute; inset: 3px; border-radius: 50%; background: var(--loc-blue); border: 3px solid #FFFFFF; box-shadow: 0 0 10px 2px rgba(37,130,255,0.6); }
+  @keyframes pulse { 0% { transform: scale(0.5); opacity: 0.9; } 100% { transform: scale(2); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .user-marker-pulse { animation: none; opacity: 0.3; } }
+
+  .hotel-badge-wrap { pointer-events: none !important; }
+  .hotel-badge { width: 30px; height: 30px; border-radius: 50%; background: rgba(18,18,18,0.88); border: 1.5px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.55); }
+  .hotel-badge svg { width: 17px; height: 17px; }
+  .hotel-label, .leaflet-tooltip.hotel-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 0 0 4px !important; color: #FFFFFF !important; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.75); white-space: nowrap; }
+  .hotel-label::before { display: none !important; }
+  .hotspot-label, .leaflet-tooltip.hotspot-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; color: rgba(255,255,255,0.6) !important; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); white-space: nowrap; }
+  .hotspot-label::before { display: none !important; }
+
+  #sheet { position: fixed; left: 0; right: 0; bottom: 0; display: none; background: var(--panel); border-radius: 22px 22px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.6); transition: height 0.32s cubic-bezier(0.4,0,0.2,1); z-index: 50; flex-direction: column; overflow: hidden; height: 0; }
+  #sheet.peek { height: 202px; }
+  #sheet.expanded { height: 84vh; }
+  @media (prefers-reduced-motion: reduce) { #sheet { transition: none; } }
+
+  .sheet-handle { width: 38px; height: 4px; background: var(--border); border-radius: 3px; margin: 11px auto 5px; flex-shrink: 0; }
+  #sheetContent { overflow-y: auto; padding: 8px 20px calc(24px + env(safe-area-inset-bottom)); flex: 1; -webkit-overflow-scrolling: touch; }
+
+  .sheet-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; margin: 4px 0 12px; letter-spacing: -0.01em; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; }
+  .filter-pill { flex-shrink: 0; background: var(--card); color: var(--text-muted); padding: 8px 15px; border-radius: 100px; font-size: 12px; font-weight: 500; white-space: nowrap; transition: transform 0.15s ease; border: 1px solid transparent; }
+  .filter-pill:active { transform: scale(0.95); }
+  .filter-pill.active { background: #FFFFFF; color: #121212; font-weight: 700; }
+  .status-pill { display: block; width: 100%; text-align: left; background: var(--card); color: var(--text); padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-bottom: 14px; border: 1px solid var(--border); }
+
+  .card-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .hotel-card { flex: 0 0 auto; width: 150px; text-align: left; background: var(--card); border-radius: 16px; padding: 13px 14px; scroll-snap-align: start; transition: transform 0.15s ease; }
+  .hotel-card:active { transform: scale(0.96); }
+  .card-name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; line-height: 1.25; margin-bottom: 4px; }
+  .card-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+  .card-rating { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+  .card-price { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text); font-weight: 700; }
+
+  .back-btn { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 12px; display: inline-block; }
+  .eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; }
+  .detail-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600; line-height: 1.15; margin-bottom: 11px; letter-spacing: -0.01em; }
+  .route-summary { display: inline-block; font-size: 12.5px; background: var(--card); color: var(--text); padding: 6px 13px; border-radius: 100px; font-weight: 500; margin-bottom: 15px; margin-right: 8px; border: 1px solid var(--border); }
+  .rating-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; background: #FFFFFF; color: #121212; padding: 6px 13px; border-radius: 100px; font-weight: 700; margin-bottom: 15px; margin-right: 8px; }
+  .hotel-description { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 18px; }
+  .facilities-heading { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 11px; }
+  .facilities-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; margin-bottom: 20px; }
+  .facility-item { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--text-muted); }
+  .facility-item svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
+  .facility-item { font-size: 12.5px; font-weight: 500; color: var(--text); }
+  .facility-item span { color: var(--text-muted); }
+
+  .rooms-heading { font-size: 12.5px; color: var(--text-muted); margin-bottom: 11px; }
+  .room-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; }
+  .room-card-v2 { background: var(--card); border-radius: 18px; overflow: hidden; text-align: left; }
+  .room-card-photo { width: 100%; height: 130px; position: relative; display: flex; align-items: center; justify-content: center; }
+  .room-card-photo svg { width: 30px; height: 30px; opacity: 0.5; }
+  .room-card-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .room-card-body { padding: 14px 16px 16px; }
+  .room-card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .room-card-beds { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+  .room-card-beds svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .room-badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .room-badge { display: flex; align-items: center; justify-content: center; background: var(--card-hi); width: 28px; height: 28px; border-radius: 50%; color: var(--text); }
+  .room-badge svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .room-badge svg { width: 12.5px; height: 12.5px; flex-shrink: 0; }
+  .room-amenities-link { font-size: 12px; color: var(--text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; margin-bottom: 13px; display: inline-block; }
+  .room-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .room-card-price { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; }
+  .room-select-btn { background: #FFFFFF; color: #121212; padding: 10px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 700; transition: transform 0.15s ease; }
+  .room-select-btn:active { transform: scale(0.95); }
+
+  .room-rate-label { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text); font-weight: 700; margin-bottom: 13px; }
+  .photo-row { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 17px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  .room-photo { flex: 0 0 auto; width: 210px; height: 136px; border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; scroll-snap-align: start; }
+  .room-photo svg { width: 32px; height: 32px; opacity: 0.5; }
+  .room-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+  .time-heading { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin: 4px 0 11px; }
+  .dial-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+  .dial { width: 150px; height: 150px; }
+  .dial-label-main { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 700; fill: var(--text); }
+  .dial-label-sub { font-family: 'IBM Plex Sans', sans-serif; font-size: 9px; fill: var(--text-muted); }
+  .preset-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .preset-btn { flex: 1; padding: 10px 6px; border: 1.5px solid var(--border); background: var(--card); border-radius: 12px; font-size: 12.5px; font-weight: 500; color: var(--text); transition: transform 0.15s ease; }
+  .preset-btn:active { transform: scale(0.96); }
+  .time-row { display: flex; gap: 10px; margin-bottom: 19px; }
+  .time-field { flex: 1; }
+  .time-field label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .time-field input { width: 100%; background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 11px 12px; color: var(--text); font-size: 14px; font-family: 'IBM Plex Mono', monospace; }
+  .time-field input:focus { outline: none; border-color: var(--accent); }
+
+  .price-breakdown { background: var(--card); border-radius: 14px; padding: 15px 17px; margin-bottom: 17px; }
+  .price-row { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 3px 0; gap: 10px; }
+  .price-row:first-child { font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+  .price-row.muted { color: var(--text-muted); font-size: 11.5px; }
+
+  .reserve-btn, .receipt-btn, .ghost-btn { width: 100%; padding: 15px; border-radius: 12px; font-size: 14px; font-weight: 700; transition: transform 0.15s ease; }
+  .reserve-btn:active, .receipt-btn:active, .ghost-btn:active { transform: scale(0.96); }
+  .reserve-btn { background: #FFFFFF; color: #121212; }
+  .receipt-btn { background: #FFFFFF; color: #121212; margin-top: 10px; }
+  .ghost-btn { background: transparent; border: 1.5px solid var(--border); color: var(--text); margin-top: 10px; font-weight: 600; font-size: 13px; padding: 12px; }
+  .confirm-msg { margin-top: 13px; padding: 13px 15px; background: var(--card); color: var(--text); border-radius: 12px; font-size: 12.5px; font-weight: 500; line-height: 1.5; }
+  .demo-note { margin-top: 17px; font-size: 10.5px; color: var(--text-muted); line-height: 1.4; }
+
+  #receiptsView { position: fixed; inset: 0; z-index: 60; display: none; flex-direction: column; background: var(--panel); }
+  .receipts-header { display: flex; align-items: center; gap: 14px; padding: max(18px, env(safe-area-inset-top)) 20px 15px; flex-shrink: 0; }
+  .receipts-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; }
+  .receipts-header .back-btn { margin-bottom: 0; }
+  #receiptsContent { flex: 1; overflow-y: auto; padding: 0 20px calc(26px + env(safe-area-inset-bottom)); }
+  .receipts-note { font-size: 12px; color: var(--text-muted); background: var(--card); padding: 13px 15px; border-radius: 14px; margin-bottom: 17px; line-height: 1.55; }
+  .receipts-empty { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 44px; }
+  .receipt-card { width: 100%; text-align: left; background: var(--card); border-radius: 16px; padding: 15px 17px; margin-bottom: 11px; transition: transform 0.15s ease; }
+  .receipt-card:active { transform: scale(0.98); }
+  .receipt-hotel { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .receipt-room { font-size: 12.5px; color: var(--text-muted); margin-bottom: 7px; }
+  .receipt-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 7px; }
+  .receipt-price { font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: var(--text); font-size: 14.5px; }
+
+  #receiptModal, #accountModal, #roomAmenitiesModal { position: fixed; inset: 0; z-index: 300; display: none; background: rgba(0,0,0,0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 14px; }
+  .modal-close { position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px; z-index: 2; width: 38px; height: 38px; border-radius: 50%; background: var(--card); color: var(--text); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
+  .modal-close:active { transform: scale(0.9); }
+  .receipt-modal-img { max-width: 340px; width: 100%; border-radius: 20px; box-shadow: 0 24px 70px rgba(0,0,0,0.7); }
+  .modal-actions { width: 100%; max-width: 340px; }
+  .modal-card { width: 100%; max-width: 340px; background: var(--panel); border-radius: 20px; padding: 26px 22px; position: relative; }
+
+  #roomAmenitiesModal { align-items: stretch; justify-content: flex-end; padding: 0; }
+  .amenities-sheet { background: var(--panel); border-radius: 20px 20px 0 0; max-height: 80vh; overflow-y: auto; padding: 22px 22px calc(30px + env(safe-area-inset-bottom)); position: relative; }
+  .amenities-sheet h2 { font-family: 'Space Grotesk', sans-serif; font-size: 19px; margin-bottom: 4px; padding-right: 30px; }
+  .amenities-building { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+  .amenity-cat-heading { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; margin: 16px 0 8px; }
+  .amenity-cat-heading:first-of-type { margin-top: 0; }
+  .amenity-list { list-style: none; }
+  .amenity-list li { font-size: 13px; padding: 5px 0; display: flex; align-items: center; gap: 9px; }
+    .amenity-list li svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--text); }
+  .amenity-list li { font-size: 13.5px; padding: 7px 0; }
+  .amenity-cat-heading { font-size: 11px; letter-spacing: 0.1em; margin: 20px 0 10px; }
+
+    #accountModal { display: none; }
+
+  .route-summary { cursor: pointer; }
+  .route-summary:active { transform: scale(0.96); background: var(--card-hi); }
+  .address-block { margin-bottom: 15px; margin-top: -5px; }
+  .address-line { font-size: 12.5px; color: var(--text); font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
+  .landmarks-line { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div id="errorBanner"></div>
+<div id="kpToast"></div>
+
+<div id="onboarding"><div id="onboardingContent"></div></div>
+
+<div id="map"></div>
+
+<div id="introOverlay"><div class="intro-mark"></div></div>
+
+<div id="topBar">
+  <button class="avatar" onclick="toggleHeaderMenu()" aria-label="Menu KinPause" id="avatarBtn"></button>
+  <span class="brand-label">KinPause</span>
+</div>
+
+<div id="headerMenu">
+  <button class="menu-item" onclick="openAccountModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+    Créer un compte
+  </button>
+  <button class="menu-item" onclick="openReservationsFromMenu()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4M16 2v4M4 10h16"/></svg>
+    Vos réservations
+  </button>
+  <button class="menu-item" onclick="openHotelListFromMenu()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    Hôtels près de vous
+  </button>
+  <div class="menu-divider"></div>
+  <a class="menu-item" href="tel:+243820460810">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .3 2 .6 3a2 2 0 01-.5 2L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012-.5c1 .3 2 .5 3 .6a2 2 0 011.7 2z"/></svg>
+    +243 820 460 810
+  </a>
+</div>
+
+<button id="locateBtn" aria-label="Me localiser" onclick="window.locateUser && window.locateUser()">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+</button>
+
+<div id="sheet"><div class="sheet-handle"></div><div id="sheetContent"></div></div>
+
+<div id="receiptsView">
+  <div class="receipts-header"><button class="back-btn" onclick="hideReceipts()">‹ Retour</button><h2>Vos réservations</h2></div>
+  <div id="receiptsContent"></div>
+</div>
+
+<div id="receiptModal">
+  <button class="modal-close" onclick="closeReceiptModal()" aria-label="Fermer">✕</button>
+  <img id="receiptModalImg" class="receipt-modal-img" alt="Reçu KinPause" />
+  <div class="modal-actions"><button class="receipt-btn" onclick="downloadCurrentReceipt()">Télécharger le reçu</button></div>
+</div>
+
+<div id="accountModal">
+  <div class="modal-card">
+    <button class="modal-close" style="position:absolute;top:14px;right:14px;" onclick="closeAccountModal()" aria-label="Fermer">✕</button>
+    <p class="ob-eyebrow">Votre compte</p>
+    <h2 class="ob-title" style="font-size:22px;">Ajouter un contact</h2>
+    <p class="ob-sub" style="margin-bottom:18px;">Facultatif — pour retrouver vos réservations sur un autre appareil.</p>
+    <label class="ob-label" style="margin-top:0;">E-mail ou numéro de téléphone</label>
+    <input type="text" id="accountContact" class="ob-input" placeholder="vous@exemple.com">
+    <button class="ob-btn" onclick="saveAccountContact()">Enregistrer</button>
+  </div>
+</div>
+
+<div id="roomAmenitiesModal">
+  <div class="amenities-sheet">
+    <button class="modal-close" onclick="closeRoomAmenities()" aria-label="Fermer">✕</button>
+    <div id="roomAmenitiesContent"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+  // ===== Service Worker Registration =====
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW registration failed:', err); });
+  }
+
+  // ===== Storage Layer (localStorage fallback) =====
+  window.storage = {
+    async get(key) {
+      try {
+        const value = localStorage.getItem(key);
+        return value !== null ? { value } : null;
+      } catch (e) {
+        console.error('storage.get error:', e);
+        return null;
+      }
+    },
+    async set(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        console.error('storage.set error:', e);
+        return false;
+      }
+    },
+    async remove(key) {
+      try {
+        localStorage.removeItem(key);
+        return true;
+      } catch (e) {
+        console.error('storage.remove error:', e);
+        return false;
+      }
+    }
+  };
+</script>
+<script>
+  window.addEventListener('error', function (e) {
+    try {
+      const banner = document.getElementById('errorBanner');
+      if (banner) { banner.style.display = 'block'; banner.textContent = 'Error: ' + (e.message || 'unknown') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''); }
+    } catch (err) {}
+  });
+
+  let toastTimer = null;
+  function showToast(message) {
+    const toast = document.getElementById('kpToast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 5000);
+  }
+
+  var ROOK_PATH = '<rect x="5" y="19" width="14" height="2"/><polygon points="7.5,19 16.5,19 15.5,10 8.5,10"/><rect x="6.5" y="6" width="11" height="3"/><rect x="6.5" y="2.5" width="2.8" height="4"/><rect x="10.6" y="2.5" width="2.8" height="4"/><rect x="14.7" y="2.5" width="2.8" height="4"/>';
+  document.getElementById('avatarBtn').innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19"><g fill="#121212">' + ROOK_PATH + '</g></svg>';
+
+  if (typeof L === 'undefined') {
+    document.getElementById('errorBanner').style.display = 'block';
+    document.getElementById('errorBanner').textContent = 'Map library (Leaflet) failed to load — check your connection and refresh.';
+  } else {
+    (function () {
+            const HOTELS = [
+        { id: 1, name: "Hilton Kinshasa", neighborhood: "Gombe", lat: -4.298516, lng: 15.312124, baseRate: 12.5, address: "Avenue Colonel Mondjiba, Gombe, Kinshasa", landmarks: "En face du Palais du Peuple, à 200 m du Boulevard du 30 Juin" },
+        { id: 2, name: "Novotel Kinshasa La Gombe", neighborhood: "Gombe", lat: -4.3040594, lng: 15.3051907, baseRate: 11, address: "Avenue du Port, Gombe, Kinshasa", landmarks: "Près de la Gare Centrale, en face du Marché Central" },
+        { id: 3, name: "Protea Hotel by Marriott", neighborhood: "Gombe", lat: -4.3026728, lng: 15.2987973, baseRate: 10, address: "Avenue de l'Équateur, Gombe, Kinshasa", landmarks: "À côté de l'Ambassade de Belgique, 100 m de l'INSS" },
+        { id: 4, name: "Four Points by Sheraton", neighborhood: "Gombe", lat: -4.3063028, lng: 15.2958413, baseRate: 12, address: "Avenue du 30 Juin, Gombe, Kinshasa", landmarks: "Face à l'Hôtel de Ville, angle Boulevard du 30 Juin" },
+        { id: 5, name: "Ibis Styles Kinshasa", neighborhood: "Gombe", lat: -4.3028341, lng: 15.3118844, baseRate: 9, address: "Boulevard du 30 Juin, Gombe, Kinshasa", landmarks: "En face de la BCDC, à 50 m de la Place de la Gare" },
+        { id: 6, name: "Hôtel Eden", neighborhood: "Shaumba", lat: -4.3247199, lng: 15.2863994, baseRate: 6, address: "Avenue Kasa-Vubu, Shaumba, Kinshasa", landmarks: "Croisement Huileries, en diagonale de l'Église Notre-Dame du Congo" },
+        { id: 7, name: "Hotel Platinum", neighborhood: "Gombe", lat: -4.3063736, lng: 15.3161236, baseRate: 7.5, address: "Avenue des Aviateurs, Gombe, Kinshasa", landmarks: "Zone des diplomates, accès rapide depuis l'aéroport de N'Djili" },
+        { id: 8, name: "Hotel Royal", neighborhood: "Gombe", lat: -4.3058989, lng: 15.3058853, baseRate: 8, address: "Avenue de la Justice, Gombe, Kinshasa", landmarks: "Derrière le Palais de Justice, à 150 m du Boulevard du 30 Juin" },
+        { id: 9, name: "Ixoras Hôtel Lemba", neighborhood: "Lemba", lat: -4.3794887, lng: 15.3348532, baseRate: 5.5, address: "Avenue de l'Université, Lemba, Kinshasa", landmarks: "Face à l'UNIKIN (Université de Kinshasa), près du Rond-point Ngaba" },
+        { id: 10, name: "La Treizième", neighborhood: "Limete", lat: -4.3608932, lng: 15.3385257, baseRate: 6, address: "Boulevard Lumumba, Limete, Kinshasa", landmarks: "À 100 m du Stade des Martyrs, en face de l'Usine de la Limete" },
+        { id: 11, name: "Ixoras Hôtel Limete", neighborhood: "Limete", lat: -4.351661, lng: 15.3338265, baseRate: 6.5, address: "Avenue Industrielle, Limete, Kinshasa", landmarks: "Croisement 13ème Rue, près du Marché de la Liberté" },
+        { id: 12, name: "Hôtel Stella", neighborhood: "Debonhomme", lat: -4.38416, lng: 15.3571995, baseRate: 9, address: "Avenue Debonhomme, Kalamu, Kinshasa", landmarks: "En face de l'Hôpital Général de Référence, près du Marché Zando" },
+        { id: 13, name: "Leon Hotel", neighborhood: "Gombe", lat: -4.3030977, lng: 15.3139028, baseRate: 10.5, address: "Avenue du Port, Gombe, Kinshasa", landmarks: "À côté du Novotel La Gombe, 200 m du Port de Kinshasa" },
+        { id: 14, name: "Fleuve Congo Hotel", neighborhood: "Gombe", lat: -4.312714, lng: 15.2703285, baseRate: 14, address: "Boulevard du 30 Juin, Gombe, Kinshasa", landmarks: "En bordure du Fleuve Congo, face au Beach Ngobila" }
+      ];
+      const HOTSPOTS = [
+        { name: "K Lounge", lat: -4.3128152, lng: 15.2851609 }, { name: "La Villa Hesbaye", lat: -4.3173385, lng: 15.287746 },
+        { name: "Le Z Lounge", lat: -4.3094647, lng: 15.2917054 }, { name: "Big Boss Lounge", lat: -4.305459, lng: 15.3039075 },
+        { name: "Coco Jambo", lat: -4.3033203, lng: 15.3129909 }, { name: "Le Klub Lounge", lat: -4.3016508, lng: 15.3138709 }
+      ];
+      const COMMISSION_RATE = 0.15;
+      const ROOM_MULT = [0.85, 1.05, 0.95, 1.4, 1.15];
+      const BED_CONFIGS = ["1 grand lit double", "1 grand lit double, 1 canapé-lit", "2 lits jumeaux", "1 très grand lit", "1 grand lit double, 1 lit simple"];
+      const ACCOM_TYPES = ["Une chambre", "Une chambre + salle de bain", "Appartement une chambre", "Chambre supérieure", "Suite avec salon"];
+      const BUILDING_FEATURES = ["Chambre d'hôtel", "Appartement privé dans un immeuble", "Appartement, dans un immeuble"];
+
+      const ROOM_AMENITIES = [
+        { key:'wifi', label:'Wi-Fi gratuit', cat:'internet', icon:'wifi', keyBadge:true },
+        { key:'ac', label:'Climatisation', cat:'roomequip', icon:'ac', keyBadge:true },
+        { key:'balcony', label:'Balcon', cat:'roomequip', icon:'balcony', keyBadge:true },
+        { key:'privatebath', label:'Salle de bains privative', cat:'bathroom', icon:'bath', keyBadge:true },
+        { key:'tv', label:'Télévision à écran plat', cat:'tech', icon:'tv', keyBadge:true },
+        { key:'teacoffee', label:'Plateau thé/café', cat:'dining', icon:'cup', keyBadge:true },
+        { key:'toiletpaper', label:'Papier toilette', cat:'bathroom' },
+        { key:'towels', label:'Serviettes', cat:'bathroom' },
+        { key:'bathtub', label:'Baignoire ou douche', cat:'bathroom' },
+        { key:'toilet', label:'Toilettes', cat:'bathroom' },
+        { key:'hairdryer', label:'Sèche-cheveux', cat:'bathroom' },
+        { key:'diningarea', label:'Coin repas', cat:'living' },
+        { key:'seating', label:'Espace assise', cat:'living' },
+        { key:'cable', label:'Chaînes câblées', cat:'tech' },
+        { key:'sofabed', label:'Canapé-lit', cat:'roomequip' },
+        { key:'dryingrack', label:'Étendoir à linge', cat:'roomequip' },
+        { key:'iron', label:'Fer à repasser', cat:'roomequip' },
+        { key:'linens', label:'Linge de maison', cat:'roomequip' }
+      ];
+      const CAT_LABELS = { internet:'Internet', bathroom:'Salle de bains', living:'Coin salon', tech:'Équipements audiovisuels & high-tech', roomequip:'Équipements de la chambre', dining:'Restauration' };
+      const CAT_ORDER = ['internet','bathroom','living','tech','roomequip','dining'];
+
+      function amenitiesForRoom(roomId) {
+        const always = ['wifi'];
+        const pool = ['ac','balcony','privatebath','tv','teacoffee','toiletpaper','towels','bathtub','toilet','hairdryer','diningarea','seating','cable','sofabed','dryingrack','iron','linens'];
+        const picked = pool.filter((_, i) => (roomId + i * 3) % 4 !== 0);
+        return ROOM_AMENITIES.filter(a => always.includes(a.key) || picked.includes(a.key));
+      }
+      function keyBadgesForRoom(room) { return room.amenities.filter(a => a.keyBadge).slice(0, 6); }
+
+      function roomsForHotel(hotel) {
+        const count = 3 + (hotel.id % 3);
+        const rooms = [];
+        for (let i = 0; i < count; i++) {
+          const rate = Math.round(hotel.baseRate * ROOM_MULT[i % ROOM_MULT.length] * 2) / 2;
+          const id = hotel.id * 10 + i;
+          rooms.push({
+            id: id,
+            accommodationType: ACCOM_TYPES[(hotel.id + i) % ACCOM_TYPES.length],
+            bedConfig: BED_CONFIGS[(hotel.id + i * 2) % BED_CONFIGS.length],
+            buildingFeature: BUILDING_FEATURES[(hotel.id + i) % BUILDING_FEATURES.length],
+            roomNumber: 100 + id,
+            pricePerHour: Math.max(4, rate),
+            amenities: amenitiesForRoom(id)
+          });
+        }
+        return rooms;
+      }
+
+      const REAL_ROOM_PHOTOS = [];
+      function roomPhotoSrc(roomId, idx) { return REAL_ROOM_PHOTOS.length ? REAL_ROOM_PHOTOS[(roomId * 3 + idx) % REAL_ROOM_PHOTOS.length] : ''; }
+      function photoSvg(kind) {
+        const icons = { bed: '<path d="M3 18v-6a2 2 0 012-2h4a2 2 0 012 2M3 18h18M3 18v2M21 18v2M13 10h6a2 2 0 012 2v6M7 10V7a2 2 0 012-2h2a2 2 0 012 2v3"/>', bath: '<path d="M4 12h16M6 12V6a2 2 0 012-2h2M8 12v6a1 1 0 001 1h6a1 1 0 001-1v-6"/>', view: '<path d="M3 20l5-7 4 4.5 3-3.5 6 6M3 4h18v13H3z"/>' };
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[kind]}</svg>`;
+      }
+      const PHOTO_GRADIENTS = [['#2C2C2C','#121212'], ['#242424','#121212'], ['#1E1E1E','#121212']];
+      function photoGradient(i) { const g = PHOTO_GRADIENTS[i % PHOTO_GRADIENTS.length]; return `linear-gradient(135deg, ${g[0]}, ${g[1]})`; }
+
+      const AMENITY_ICONS = {
+        wifi: '<path d="M3 8.5a15 15 0 0118 0"/><path d="M6.5 12a10 10 0 0111 0"/><path d="M10 15.5a4.5 4.5 0 014 0"/><circle cx="12" cy="19" r="0.9" fill="currentColor" stroke="none"/>',
+        ac: '<path d="M12 2v20M3.5 6.5l17 11M20.5 6.5l-17 11"/>',
+        balcony: '<path d="M4 21V10M20 21V10M4 10h16M7 21v-7M12 21v-7M17 21v-7"/>',
+        bath: '<path d="M4 12h16M6 12V6a2 2 0 012-2h2M8 12v6a1 1 0 001 1h6a1 1 0 001-1v-6"/>',
+        tv: '<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/>',
+        cup: '<path d="M4 8h12v6a4 4 0 01-4 4H8a4 4 0 01-4-4z"/><path d="M16 9h2a2 2 0 010 4h-2M8 4c0 1-1 1-1 2M12 4c0 1-1 1-1 2"/>',
+        check: '<path d="M20 6L9 17l-5-5"/>'
+      };
+      function amenityIconSvg(key) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${AMENITY_ICONS[key] || AMENITY_ICONS.check}</svg>`; }
+
+            const FACILITY_ICONS = {
+        parking: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 010 6H9"/>',
+        restaurant: '<path d="M3 2v8a2 2 0 002 2v9"/><path d="M7 2v10a2 2 0 002 2v7"/><path d="M17 2a4 4 0 00-4 4v6a2 2 0 002 2v7"/>',
+        pool: '<path d="M2 15c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0 3-1 4.5 0"/><path d="M2 10c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0 3-1 4.5 0"/><path d="M12 5v2"/><path d="M16 3v4"/><path d="M8 3v4"/>',
+        wifi: '<path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
+        lounge: '<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v8a5 5 0 01-10 0V4z"/>',
+        building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/>'
+      };
+      const FACILITIES = [
+        { key:'parking', label:'Parking' },
+        { key:'restaurant', label:'Restaurant' },
+        { key:'pool', label:'Piscine' },
+        { key:'wifi', label:'Internet / Wi-Fi' },
+        { key:'lounge', label:'Food & Drink' },
+        { key:'building', label:'Caractéristiques du bâtiment' }
+      ];
+            function facilitiesForHotel(hotel) {
+        const optional = ['parking','restaurant','pool','wifi','lounge','building'];
+        const picked = optional.filter((_, i) => (hotel.id + i * 3) % 5 !== 0);
+        return FACILITIES.filter(f => picked.includes(f.key));
+      }
+      function facilityIconSvg(key) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke-linecap:round;stroke-linejoin:round;">${FACILITY_ICONS[key]}</svg>`; }
+      function hotelRating(hotel) { return Math.round((8.3 + ((hotel.id * 7) % 15) / 10) * 10) / 10; }
+      function ratingLabel(score) { if (score >= 9.5) return 'Exceptionnel'; if (score >= 9) return 'Superbe'; if (score >= 8.5) return 'Très bien'; return 'Bien'; }
+      const DESC_TEMPLATES = [ h => `Un espace discret au cœur de ${h.neighborhood}, pensé pour votre tranquillité.`, h => `Situé à ${h.neighborhood}, cet hôtel privilégie le calme et la discrétion.`, h => `Une adresse élégante à ${h.neighborhood}, loin de l'agitation.` ];
+      function hotelDescription(hotel) { return DESC_TEMPLATES[hotel.id % DESC_TEMPLATES.length](hotel); }
+
+      let selectedStartTime = null, selectedEndTime = null;
+      let selectedHotelId = null, selectedRoomId = null, sortMode = 'distance';
+      let userLocation = null, locationState = 'idle';
+      let userMarker = null, routeLayer = null;
+      let currentAccount = null, lastReceipt = null, currentModalReceipt = null, receiptsCache = [];
+      let sheetMode = 'hidden';
+      const hotelMarkers = {};
+
+      const sheetEl = document.getElementById('sheet');
+      const sheetContent = document.getElementById('sheetContent');
+      const locateBtn = document.getElementById('locateBtn');
+
+      const map = L.map('map', { zoomControl: false, attributionControl: false });
+      L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
+      const KINSHASA_CENTER = [-4.325, 15.322];
+      const bounds = L.latLngBounds(HOTELS.map(h => [h.lat, h.lng]));
+      map.fitBounds(bounds, { padding: [50, 50] });
+
+      const BED_ICON_MARKER = '<path d="M3 17v-5a2 2 0 012-2h14a2 2 0 012 2v5M3 17v2M21 17v2M5 10V7a2 2 0 012-2h3a2 2 0 012 2v3M12 10V8a2 2 0 012-2h3a2 2 0 012 2v2"/>';
+      function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
+
+            function addHotelMarker(hotel) {
+        const glow = L.circleMarker([hotel.lat, hotel.lng], { radius: 16, fillColor: '#FFFFFF', fillOpacity: 0.12, stroke: false, interactive: true }).addTo(map);
+        const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, keyboard: false }).addTo(map);
+        glow.bindTooltip(hotel.name, { permanent: true, direction: 'right', offset: [17, 0], className: 'hotel-label', opacity: 1 });
+
+        glow.on('click', function (e) { try { L.DomEvent.stopPropagation(e); } catch (err) {} selectHotel(hotel.id); });
+
+        glow.on('dblclick', function (e) {
+          try { L.DomEvent.stopPropagation(e); } catch (err) {}
+          if (userLocation) {
+            selectHotel(hotel.id);
+            setTimeout(() => drawRoute(hotel), 300);
+          } else {
+            showToast("Localisez-vous d'abord pour voir l'itinéraire");
+            locateUser();
+          }
+        });
+
+        hotelMarkers[hotel.id] = { glow, badge };
+      }
+      HOTELS.forEach(addHotelMarker);
+
+      function addHotspotMarker(spot) {
+        const dot = L.circleMarker([spot.lat, spot.lng], { radius: 5, fillColor: '#8A8A8A', fillOpacity: 0.9, color: '#121212', weight: 1.5, interactive: false }).addTo(map);
+        dot.bindTooltip(spot.name, { permanent: true, direction: 'top', offset: [0, -6], className: 'hotspot-label', opacity: 1 });
+      }
+      HOTSPOTS.forEach(addHotspotMarker);
+
+      function updateLabelVisibility() {
+        const show = map.getZoom() >= 15;
+        HOTELS.forEach(h => { const m = hotelMarkers[h.id]; if (!m) return; if (show) { if (!m.glow.isTooltipOpen()) m.glow.openTooltip(); } else { m.glow.closeTooltip(); } });
+      }
+      map.on('zoomend', updateLabelVisibility);
+
+      function setSelectedMarkerStyle(selectedId) {
+        HOTELS.forEach(h => { const m = hotelMarkers[h.id]; if (!m) return; m.glow.setStyle({ fillOpacity: (h.id === selectedId) ? 0.3 : 0.12 }); });
+      }
+
+      map.on('click', function () { if (sheetMode !== 'hidden') closeSheet(); });
+
+      function haversineDistance(lat1, lng1, lat2, lng2) {
+        const toRad = d => d * Math.PI / 180; const R = 6371;
+        const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+        const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      }
+      function formatDist(km) { return km < 1 ? Math.round(km*1000) + ' m' : km.toFixed(1) + ' km'; }
+      function curvedLinePoints(from, to, curvature) {
+        const lat1=from.lat, lng1=from.lng, lat2=to.lat, lng2=to.lng;
+        const dLat=lat2-lat1, dLng=lng2-lng1, dist=Math.sqrt(dLat*dLat+dLng*dLng)||0.0001;
+        const perpLat=-dLng/dist, perpLng=dLat/dist;
+        const ctrlLat=(lat1+lat2)/2+perpLat*dist*curvature, ctrlLng=(lng1+lng2)/2+perpLng*dist*curvature;
+        const pts=[], steps=16;
+        for (let i=0;i<=steps;i++){ const t=i/steps; pts.push([(1-t)*(1-t)*lat1+2*(1-t)*t*ctrlLat+t*t*lat2,(1-t)*(1-t)*lng1+2*(1-t)*t*ctrlLng+t*t*lng2]); }
+        return pts;
+      }
+      function simulatedRoutePoints(from, to) {
+        const dLat = to.lat - from.lat, dLng = to.lng - from.lng;
+        const dominant = Math.abs(dLat) > Math.abs(dLng);
+        const wp1 = dominant ? { lat: from.lat + dLat*0.55, lng: from.lng + dLng*0.12 } : { lat: from.lat + dLat*0.12, lng: from.lng + dLng*0.55 };
+        const wp2 = dominant ? { lat: from.lat + dLat*0.85, lng: from.lng + dLng*0.6 } : { lat: from.lat + dLat*0.6, lng: from.lng + dLng*0.85 };
+        const segs = [[from, wp1], [wp1, wp2], [wp2, to]];
+        let pts = [];
+        segs.forEach(([a,b], idx) => { const c = curvedLinePoints(a, b, 0.05); pts = pts.concat(idx === 0 ? c : c.slice(1)); });
+        return pts;
+      }
+
+      function polarToCartesian(cx, cy, r, angleDeg) { const rad = (angleDeg - 90) * Math.PI / 180; return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }; }
+      function arcPath(startDeg, endDeg, cx, cy, r) {
+        if (endDeg <= startDeg) endDeg += 360;
+        const start = polarToCartesian(cx, cy, r, startDeg), end = polarToCartesian(cx, cy, r, endDeg);
+        const large = (endDeg - startDeg) <= 180 ? 0 : 1;
+        return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+      }
+      function hourAngle(h) { return (h / 24) * 360; }
+      function timeToHourFloat(hhmm) { const parts = hhmm.split(':').map(Number); return parts[0] + parts[1]/60; }
+      function slotHours() { const s = timeToHourFloat(selectedStartTime); let e = timeToHourFloat(selectedEndTime); if (e <= s) e += 24; return Math.max(0.5, e - s); }
+      function renderDial() {
+        const startHour = timeToHourFloat(selectedStartTime), hours = slotHours();
+        const cx=60, cy=60, r=46;
+        const dayPath = arcPath(hourAngle(6), hourAngle(18), cx, cy, r);
+        const night1 = arcPath(hourAngle(18), hourAngle(24), cx, cy, r);
+        const night2 = arcPath(hourAngle(0), hourAngle(6), cx, cy, r);
+        const selectPath = arcPath(hourAngle(startHour), hourAngle(startHour + hours), cx, cy, r);
+        return `<svg viewBox="0 0 120 120" class="dial">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#FFFFFF1A" stroke-width="9" />
+          <path d="${dayPath}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.35" />
+          <path d="${night1}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.12" />
+          <path d="${night2}" fill="none" stroke="#FFFFFF" stroke-width="9" opacity="0.12" />
+          <path d="${selectPath}" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" />
+          <text x="60" y="55" text-anchor="middle" class="dial-label-main">${selectedStartTime}</text>
+          <text x="60" y="69" text-anchor="middle" class="dial-label-sub">à ${selectedEndTime}</text>
+        </svg>`;
+      }
+
+      function roundToHalfHour(date) { const ms = 1000*60*30; return new Date(Math.ceil(date.getTime()/ms)*ms); }
+      function fmtHHMM(d) { return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+      function initTimeSlot() { const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + 2*3600000); selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end); }
+            window.applyPreset = function (hours) {
+        const start = roundToHalfHour(new Date()); const end = new Date(start.getTime() + hours*3600000);
+        selectedStartTime = fmtHHMM(start); selectedEndTime = fmtHHMM(end);
+        refreshRoomDetail();
+      };
+      window.applyCustom = function () {
+        const startInput = document.getElementById('startTimeInput');
+        if (startInput) {
+          startInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => startInput.focus(), 350);
+        }
+      };
+      window.onTimeInputChange = function () {
+        const s = document.getElementById('startTimeInput').value, e = document.getElementById('endTimeInput').value;
+        if (s) selectedStartTime = s; if (e) selectedEndTime = e;
+        refreshRoomDetail();
+      };
+      function refreshRoomDetail() {
+        const hotel = HOTELS.find(h => h.id === selectedHotelId);
+        const room = hotel ? roomsForHotel(hotel).find(r => r.id === selectedRoomId) : null;
+        if (hotel && room) renderRoomDetail(hotel, room);
+      }
+
+      function openSheetPeek() { sheetMode = 'list'; sheetEl.classList.remove('expanded'); sheetEl.classList.add('peek'); locateBtn.classList.remove('hidden'); locateBtn.classList.add('raised'); sheetEl.style.display = 'flex'; }
+      function expandSheet() { sheetMode = 'hotel'; sheetEl.classList.remove('peek'); sheetEl.classList.add('expanded'); locateBtn.classList.add('hidden'); sheetEl.style.display = 'flex'; }
+      function closeSheet() {
+        sheetMode = 'hidden'; sheetEl.classList.remove('expanded'); sheetEl.classList.remove('peek'); sheetEl.style.display = 'none';
+        locateBtn.classList.remove('hidden'); locateBtn.classList.remove('raised');
+        selectedHotelId = null; selectedRoomId = null;
+        if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+        setSelectedMarkerStyle(null);
+      }
+      window.collapseSheet = function () { openSheetPeek(); renderSheetList(); selectedHotelId = null; selectedRoomId = null; if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; } setSelectedMarkerStyle(null); };
+      window.closeSheet = closeSheet;
+
+      function cheapestRate(hotel) { return Math.min(...roomsForHotel(hotel).map(r => r.pricePerHour)); }
+      function sortedHotels() {
+        const list = [...HOTELS];
+        if (sortMode === 'price') return list.sort((a,b) => cheapestRate(a) - cheapestRate(b));
+        if (userLocation) return list.sort((a,b) => haversineDistance(userLocation.lat,userLocation.lng,a.lat,a.lng) - haversineDistance(userLocation.lat,userLocation.lng,b.lat,b.lng));
+        return list;
+      }
+      window.setSortMode = function (mode) { sortMode = mode; renderSheetList(); };
+
+      function locationStatus() {
+        if (userLocation) return null;
+        if (locationState === 'loading') return { text: 'Localisation en cours…', action: '' };
+        if (locationState === 'denied' || locationState === 'unsupported') return { text: "Position indisponible — touchez la carte pour la définir", action: 'armManualLocation()' };
+        return { text: 'Touchez pour trouver les hôtels les plus proches', action: 'window.locateUser()' };
+      }
+
+      window.openHotelListFromMenu = function () { document.getElementById('headerMenu').classList.remove('show'); openSheetPeek(); renderSheetList(); };
+
+      function renderSheetList() {
+        const list = sortedHotels(); const status = locationStatus();
+        sheetContent.innerHTML = `
+          <p class="sheet-title">${userLocation ? 'Hôtels près de vous' : 'Hôtels à Kinshasa'}</p>
+          <div class="filter-row">
+            <button class="filter-pill ${sortMode === 'distance' ? 'active' : ''}" onclick="setSortMode('distance')">Plus proches</button>
+            <button class="filter-pill ${sortMode === 'price' ? 'active' : ''}" onclick="setSortMode('price')">Moins chers</button>
+          </div>
+          ${status ? `<button class="status-pill" onclick="${status.action}">${status.text}</button>` : ''}
+          <div class="card-row">
+            ${list.map(h => `
+              <button class="hotel-card" onclick="selectHotel(${h.id})">
+                <p class="card-name">${h.name}</p>
+                <p class="card-meta">${userLocation ? formatDist(haversineDistance(userLocation.lat,userLocation.lng,h.lat,h.lng)) + ' · ' : ''}${h.neighborhood}</p>
+                <p class="card-rating">${hotelRating(h)} · ${ratingLabel(hotelRating(h))}</p>
+                <p class="card-price">Dès $${cheapestRate(h)}/h</p>
+              </button>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      window.selectHotel = function (id) {
+        expandSheet();
+        try {
+          selectedHotelId = id; selectedRoomId = null;
+          const hotel = HOTELS.find(h => h.id === id);
+          if (!hotel) throw new Error('Hotel not found: ' + id);
+          setSelectedMarkerStyle(id);
+          renderHotelRooms(hotel);
+          if (userLocation) { drawRoute(hotel); } else { map.panTo([hotel.lat, hotel.lng]); }
+        } catch (e) {
+          console.error('selectHotel error:', e);
+          sheetContent.innerHTML = `<button class="back-btn" onclick="closeSheet()">‹ Fermer</button><p>Une erreur est survenue. Veuillez réessayer.</p>`;
+        }
+      };
+
+      function renderHotelRooms(hotel) {
+        const rooms = roomsForHotel(hotel); const rating = hotelRating(hotel);
+        sheetContent.innerHTML = `
+          <button class="back-btn" onclick="collapseSheet()">‹ Retour aux hôtels à proximité</button>
+          <p class="eyebrow">${hotel.neighborhood}, Kinshasa</p>
+          <h2 class="detail-title">${hotel.name}</h2>
+          <span class="rating-badge">${rating} · ${ratingLabel(rating)}</span>
+          ${userLocation ? `<button type="button" class="route-summary" id="routeSummary" onclick="triggerRouteFromSheet(${hotel.id})">${formatDist(haversineDistance(userLocation.lat,userLocation.lng,hotel.lat,hotel.lng))} · estimation</button>` : ''}
+          <div class="address-block">
+            <p class="address-line">${hotel.address || ''}</p>
+            ${hotel.landmarks ? `<p class="landmarks-line">${hotel.landmarks}</p>` : ''}
+          </div>
+          <p class="hotel-description">${hotelDescription(hotel)}</p>
+          <p class="facilities-heading">Équipements de l'hôtel</p>
+          <div class="facilities-grid">${facilitiesForHotel(hotel).map(f => `<span class="facility-item">${facilityIconSvg(f.key)}<span>${f.label}</span></span>`).join('')}</div>
+          <p class="rooms-heading">${rooms.length} chambre${rooms.length === 1 ? '' : 's'} disponible${rooms.length === 1 ? '' : 's'} maintenant</p>
+          <div class="room-list">
+            ${rooms.map((r, i) => `
+              <div class="room-card-v2">
+                <div class="room-card-photo" style="background:${photoGradient(i)}">${photoSvg('bed')}<img src="${roomPhotoSrc(r.id, 0)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
+                <div class="room-card-body">
+                  <p class="room-card-title">${r.accommodationType}</p>
+                  <p class="room-card-beds">${amenityIconSvg('check')}${r.bedConfig}</p>
+                  <div class="room-badge-row">${keyBadgesForRoom(r).map(a => `<span class="room-badge" title="${a.label}">${amenityIconSvg(a.icon)}</span>`).join('')}</div>
+                  <button class="room-amenities-link" onclick="openRoomAmenities(${r.id})">Voir tous les équipements ›</button>
+                  <div class="room-card-footer">
+                    <span class="room-card-price">$${r.pricePerHour}/h</span>
+                    <button class="room-select-btn" onclick="selectRoom(${r.id})">Sélectionner</button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <p class="demo-note">Prototype — aucune donnée n'est envoyée à un vrai hôtel.</p>
+        `;
+      }
+      window.triggerRouteFromSheet = async function(hotelId) {
+        const hotel = HOTELS.find(h => h.id === hotelId);
+        if (!hotel) return;
+        if (!userLocation) {
+          showToast("Localisez-vous d'abord pour voir l'itinéraire");
+          locateUser();
+          return;
+        }
+        const summary = document.getElementById('routeSummary');
+        if (summary) summary.textContent = 'Itinéraire…';
+        await drawRoute(hotel);
+      };
+      window.openRoomAmenities = function (roomId) {
+        const hotel = HOTELS.find(h => h.id === selectedHotelId);
+        const room = hotel ? roomsForHotel(hotel).find(r => r.id === roomId) : null;
+        if (!room) return;
+        let html = `<h2>${room.accommodationType}</h2><p class="amenities-building">${room.buildingFeature}</p>`;
+        CAT_ORDER.forEach(catKey => {
+          const items = room.amenities.filter(a => a.cat === catKey);
+          if (!items.length) return;
+          html += `<p class="amenity-cat-heading">${CAT_LABELS[catKey]}</p><ul class="amenity-list">${items.map(a => `<li>${amenityIconSvg('check')}${a.label}</li>`).join('')}</ul>`;
+        });
+        document.getElementById('roomAmenitiesContent').innerHTML = html;
+        document.getElementById('roomAmenitiesModal').style.display = 'flex';
+      };
+      window.closeRoomAmenities = function () { document.getElementById('roomAmenitiesModal').style.display = 'none'; };
+
+      window.selectRoom = function (roomId) {
+        try {
+          const hotel = HOTELS.find(h => h.id === selectedHotelId);
+          if (!hotel) throw new Error('No hotel selected');
+          const room = roomsForHotel(hotel).find(r => r.id === roomId);
+          if (!room) throw new Error('Room not found: ' + roomId);
+          selectedRoomId = roomId; initTimeSlot();
+          renderRoomDetail(hotel, room);
+        } catch (e) {
+          console.error('selectRoom error:', e);
+          sheetContent.innerHTML = `<button class="back-btn" onclick="backToRooms()">‹ Retour</button><p>Une erreur est survenue.</p>`;
+        }
+      };
+      window.backToRooms = function () {
+        selectedRoomId = null;
+        const hotel = HOTELS.find(h => h.id === selectedHotelId);
+        if (hotel) { try { renderHotelRooms(hotel); } catch (e) { console.error(e); } } else closeSheet();
+      };
+
+      function renderRoomDetail(hotel, room) {
+        sheetContent.innerHTML = `
+          <button class="back-btn" onclick="backToRooms()">‹ Retour aux chambres</button>
+          <p class="eyebrow">${hotel.name}</p>
+          <h2 class="detail-title">${room.accommodationType}</h2>
+          <p class="room-rate-label">Chambre ${room.roomNumber} · $${room.pricePerHour}/h</p>
+          <div class="photo-row">
+            <div class="room-photo" style="background:${photoGradient(0)}">${photoSvg('bed')}<img class="room-photo-img" src="${roomPhotoSrc(room.id, 0)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
+            <div class="room-photo" style="background:${photoGradient(1)}">${photoSvg('bath')}<img class="room-photo-img" src="${roomPhotoSrc(room.id, 1)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
+            <div class="room-photo" style="background:${photoGradient(2)}">${photoSvg('view')}<img class="room-photo-img" src="${roomPhotoSrc(room.id, 2)}" alt="" onerror="this.style.display='none'" loading="lazy" /></div>
+          </div>
+          <p class="time-heading">Choisissez votre créneau</p>
+          <div class="dial-wrap">${renderDial()}</div>
+          <div class="preset-row">
+            <button class="preset-btn" onclick="applyPreset(2)">2h</button>
+            <button class="preset-btn" onclick="applyPreset(3)">3h</button>
+            <button class="preser-btn" onclick="applyCustom()">Choisissez vos heures</button>
+            <button class="preset-btn" onclick="applyPreset(10)">Nuit</button>
+          </div>
+          <div class="time-row">
+            <div class="time-field"><label>Début</label><input type="time" id="startTimeInput" value="${selectedStartTime}" onchange="onTimeInputChange()"></div>
+            <div class="time-field"><label>Fin</label><input type="time" id="endTimeInput" value="${selectedEndTime}" onchange="onTimeInputChange()"></div>
+          </div>
+          <div class="price-breakdown" id="priceBreakdown"></div>
+          <button class="reserve-btn" id="reserveBtn" onclick="reserve()">Demander la réservation</button>
+          <div id="confirmArea"></div>
+          <p class="demo-note">Prototype — aucune donnée n'est traitée comme paiement.</p>
+        `;
+        updatePriceBreakdown(room);
+      }
+
+      function updatePriceBreakdown(room) {
+        const hours = slotHours();
+        const price = +(room.pricePerHour * hours).toFixed(2);
+        const fee = +(price * COMMISSION_RATE).toFixed(2);
+        const hotelTake = +(price - fee).toFixed(2);
+        const el = document.getElementById('priceBreakdown'); if (!el) return;
+        el.innerHTML = `
+          <div class="price-row"><span>Total (${hours}h à $${room.pricePerHour}/h)</span><span>$${price}</span></div>
+          <div class="price-row muted"><span>Frais KinPause (15%)</span><span>$${fee}</span></div>
+          <div class="price-row muted"><span>L'hôtel reçoit</span><span>$${hotelTake}</span></div>
+        `;
+      }
+
+      window.reserve = async function () {
+        const hotel = HOTELS.find(h => h.id === selectedHotelId);
+        const room = hotel ? roomsForHotel(hotel).find(r => r.id === selectedRoomId) : null;
+        if (!hotel || !room) return;
+        const hours = slotHours();
+        const price = +(room.pricePerHour * hours).toFixed(2);
+        const request = { code: generateReceiptCode(), username: currentAccount ? currentAccount.username : '', birthdate: currentAccount ? currentAccount.birthdate : '', hotel: hotel.name, room: room.accommodationType, roomNumber: room.roomNumber, timeSlot: `${selectedStartTime} - ${selectedEndTime}`, price, time: new Date().toISOString() };
+        try {
+          let list = [];
+          try { const existing = await window.storage.get('kin_requests'); if (existing && existing.value) list = JSON.parse(existing.value); } catch (e) {}
+          list.push(request);
+          await window.storage.set('kin_requests', JSON.stringify(list));
+        } catch (e) { console.error('Storage error', e); }
+        lastReceipt = request;
+        const confirmArea = document.getElementById('confirmArea');
+        if (confirmArea) confirmArea.innerHTML = `<div class="confirm-msg">✓ Envoyé — ${hotel.name}, ${room.accommodationType} confirmera bientôt.</div><button class="ghost-btn" onclick="viewLastReceipt()">Revoir le reçu</button>`;
+        const btn = document.getElementById('reserveBtn'); if (btn) btn.style.display = 'none';
+        openReceiptModal(request);
+      };
+
+      function generateReceiptCode() { const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<8;i++) c+=chars[Math.floor(Math.random()*chars.length)]; return c.slice(0,4)+'-'+c.slice(4); }
+      function formatDateFr(iso) { const d=new Date(iso); if(isNaN(d.getTime())) return iso||'—'; return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}); }
+      function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+      function wrapText(ctx,text,x,y,maxWidth,lineHeight){ const words=text.split(' '); let line='',lines=0; for(const w of words){ const test=line+w+' '; if(ctx.measureText(test).width>maxWidth&&line){ ctx.fillText(line,x,y+lines*lineHeight); line=w+' '; lines++; } else line=test; } ctx.fillText(line,x,y+lines*lineHeight); return lines+1; }
+      function drawCodeBars(ctx,x,y,w,h,code){ ctx.fillStyle='#121212'; const barCount=34, barW=w/barCount, ch=code.replace('-',''); for(let i=0;i<barCount;i++){ const seed=ch.charCodeAt(i%ch.length)+i*11; if(seed%3!==0){ const bw=barW*(0.35+(seed%10)/15); ctx.fillRect(x+i*barW,y,bw,h); } } }
+      function drawMiniRook(ctx, cx, cy, s) {
+        ctx.save(); ctx.translate(cx - 40*s, cy - 51*s); ctx.scale(s, s); ctx.fillStyle = '#121212';
+        ctx.fillRect(28,78,44,5);
+        ctx.beginPath(); ctx.moveTo(32,78); ctx.lineTo(68,78); ctx.lineTo(62,46); ctx.lineTo(38,46); ctx.closePath(); ctx.fill();
+        ctx.fillRect(30,40,40,7); ctx.fillRect(30,20,9,20); ctx.fillRect(45.5,20,9,20); ctx.fillRect(61,20,9,20);
+        ctx.restore();
+      }
+      function drawReceiptCanvas(r) {
+        const W=640, H=1040;
+        const canvas = document.createElement('canvas'); canvas.width=W; canvas.height=H;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle='#1A1A1A'; ctx.fillRect(0,0,W,H);
+        ctx.fillStyle='#000000'; ctx.fillRect(0,0,W,140);
+        ctx.fillStyle='#FFFFFF'; ctx.beginPath(); ctx.arc(68,70,26,0,Math.PI*2); ctx.fill();
+        drawMiniRook(ctx, 68, 70, 0.58);
+        ctx.fillStyle='#FFFFFF'; ctx.font='700 30px "Space Grotesk", sans-serif'; ctx.fillText('KinPause', 110, 78);
+        ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='400 14px "IBM Plex Sans", sans-serif'; ctx.fillText('Reçu de réservation', 110, 104);
+        let y=185;
+        function row(label,value,big){ ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='500 12.5px "IBM Plex Sans", sans-serif'; ctx.fillText(label.toUpperCase(),44,y); ctx.fillStyle='#FFFFFF'; ctx.font=(big?'600 23px':'600 17px')+' "Space Grotesk", sans-serif'; ctx.fillText(String(value),44,y+(big?30:24)); y+=big?56:48; }
+        row('Utilisateur', r.username || '—');
+        row('Date de naissance', formatDateFr(r.birthdate));
+        row('Hôtel', r.hotel, true);
+        row('Chambre', r.room);
+        row('Créneau réservé', r.timeSlot || '—', true);
+        row('Prix', '$' + r.price);
+        row('Réservé le', new Date(r.time).toLocaleString('fr-FR'));
+        y+=6; ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(44,y); ctx.lineTo(W-44,y); ctx.stroke(); ctx.setLineDash([]); y+=42;
+        ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='500 12.5px "IBM Plex Sans", sans-serif'; ctx.fillText('CODE DE VÉRIFICATION',44,y); y+=36;
+        ctx.fillStyle='#FFFFFF'; ctx.font='700 34px "IBM Plex Mono", monospace'; ctx.fillText(r.code||'—',44,y);
+        ctx.fillStyle='#FFFFFF'; ctx.fillRect(44,y+26,W-88,46);
+        drawCodeBars(ctx,44,y+26,W-88,46,r.code||'KP00-0000'); y+=100;
+        ctx.fillStyle='#232323'; roundRect(ctx,30,y,W-60,150,16); ctx.fill();
+        ctx.fillStyle='#FFFFFF'; ctx.font='400 13.5px "IBM Plex Sans", sans-serif';
+        wrapText(ctx, "Présentez ce reçu et une pièce d'identité (passeport, permis de conduire, carte d'étudiant ou carte d'électeur) à la réception — pour vous et votre partenaire — afin de confirmer que vous avez tous les deux 18 ans ou plus.", 50, y+30, W-100, 21);
+        return canvas;
+      }
+      function triggerReceiptDownload(r){ try{ const canvas=drawReceiptCanvas(r); const link=document.createElement('a'); link.download='KinPause-recu-'+(r.code||'x')+'.png'; link.href=canvas.toDataURL('image/png'); link.click(); }catch(e){console.error('Receipt download failed',e);} }
+      function openReceiptModal(r){ currentModalReceipt=r; try{ const canvas=drawReceiptCanvas(r); document.getElementById('receiptModalImg').src=canvas.toDataURL('image/png'); document.getElementById('receiptModal').style.display='flex'; }catch(e){console.error('Receipt view failed',e);} }
+      window.viewLastReceipt = function(){ if(lastReceipt) openReceiptModal(lastReceipt); };
+      window.viewReceiptByCode = function(code){ const r=receiptsCache.find(x=>x.code===code); if(r) openReceiptModal(r); };
+      window.closeReceiptModal = function(){ document.getElementById('receiptModal').style.display='none'; };
+      window.downloadCurrentReceipt = function(){ if(currentModalReceipt) triggerReceiptDownload(currentModalReceipt); };
+
+            async function fetchRealRoute(from, to) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('OSRM HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.routes || !data.routes.length) throw new Error('No route found');
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        const duration = data.routes[0].duration;
+        return { coords, duration };
+      }
+
+      async function drawRoute(hotel) {
+        try {
+          if (routeLayer) map.removeLayer(routeLayer);
+
+          let coords = [];
+          let duration = null;
+          let isRealRoute = false;
+          const startPoint = userLocation || KINSHASA_CENTER;
+
+          if (userLocation) {
+            try {
+              const realRoute = await fetchRealRoute(userLocation, hotel);
+              if (realRoute && realRoute.coords.length > 0) {
+                coords = realRoute.coords;
+                duration = realRoute.duration;
+                isRealRoute = true;
+              }
+            } catch (e) {
+              console.warn('Real routing failed, using fallback', e);
+            }
+          }
+
+          if (!isRealRoute) {
+            coords = simulatedRoutePoints(startPoint, hotel);
+          }
+
+          routeLayer = L.polyline(coords, {
+            color: '#FFFFFF',
+            weight: 4,
+            opacity: 0.9,
+            dashArray: isRealRoute ? null : '2 9',
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
+
+          const km = haversineDistance(startPoint.lat, startPoint.lng, hotel.lat, hotel.lng);
+
+          const el = document.getElementById('routeSummary');
+          if (el) {
+            let text = formatDist(km);
+            if (duration) {
+              const mins = Math.round(duration / 60);
+              text += ` · ${mins} min`;
+            } else {
+              text += ' · estimation';
+            }
+            el.textContent = text;
+          }
+
+          const b = L.latLngBounds(coords);
+          const sheetPx = Math.round(window.innerHeight * 0.84) + 20;
+          map.fitBounds(b, { paddingTopLeft: [40, 90], paddingBottomRight: [40, sheetPx] });
+        } catch (e) {
+          console.error('drawRoute error:', e);
+        }
+      }
+
+      function locateUser() {
+        if (!navigator.geolocation) {
+          locationState = 'unsupported';
+          showToast("La géolocalisation n'est pas prise en charge par ce navigateur.");
+          if (sheetMode === 'list') renderSheetList();
+          return;
+        }
+        locationState = 'loading'; locateBtn.classList.add('loading');
+        if (sheetMode === 'list') renderSheetList();
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            locateBtn.classList.remove('loading');
+            userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            locationState = 'resolved';
+            onLocationResolved();
+          },
+          (err) => {
+            locateBtn.classList.remove('loading');
+            locationState = 'denied';
+            if (sheetMode === 'list') renderSheetList();
+            if (err && err.code === 1) {
+              showToast("Autorisation de localisation refusée. Veuillez autoriser l'accès à la position dans les paramètres de votre navigateur.");
+            } else if (err && err.code === 3) {
+              showToast("La localisation a expiré — la carte reste centrée sur Kinshasa.");
+            } else {
+              showToast("Impossible d'obtenir votre position — la carte reste centrée sur Kinshasa.");
+            }
+            map.setView(KINSHASA_CENTER, 13);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+      }
+      window.locateUser = locateUser;
+      window.armManualLocation = function () {
+        const pill = sheetContent.querySelector('.status-pill'); if (pill) pill.textContent = 'Touchez la carte pour définir votre position';
+        map.once('click', (e) => { userLocation = { lat: e.latlng.lat, lng: e.latlng.lng }; locationState = 'resolved'; onLocationResolved(); });
+      };
+      function showUserMarker() {
+        const icon = L.divIcon({ className: 'user-marker', html: '<div class="user-marker-wrap"><div class="user-marker-pulse"></div><div class="user-marker-dot"></div></div>', iconSize: [26,26], iconAnchor: [13,13] });
+        if (userMarker) userMarker.setLatLng([userLocation.lat, userLocation.lng]); else userMarker = L.marker([userLocation.lat, userLocation.lng], { icon, interactive: false, zIndexOffset: 1000 }).addTo(map);
+      }
+      function onLocationResolved() {
+        showUserMarker();
+        map.setView([userLocation.lat, userLocation.lng], 14);
+        if (sheetMode === 'list') renderSheetList();
+        else if (selectedHotelId) { const hotel = HOTELS.find(h => h.id === selectedHotelId); if (hotel) drawRoute(hotel); }
+      }
+
+      window.showReceipts = async function () {
+        document.getElementById('headerMenu').classList.remove('show');
+        if (sheetMode !== 'hidden') closeSheet();
+        document.getElementById('receiptsView').style.display = 'flex';
+        let list = [];
+        try { const existing = await window.storage.get('kin_requests'); if (existing && existing.value) list = JSON.parse(existing.value); } catch (e) {}
+        renderReceipts(list);
+      };
+      window.openReservationsFromMenu = window.showReceipts;
+      window.hideReceipts = function () { document.getElementById('receiptsView').style.display = 'none'; };
+      function renderReceipts(list) {
+        receiptsCache = list;
+        const el = document.getElementById('receiptsContent');
+        let html = `<p class="receipts-note">À l'entrée de l'hôtel, présentez ce reçu numérique ainsi qu'une pièce d'identité (passeport, permis de conduire, carte d'étudiant ou carte d'électeur) — pour vous et votre partenaire — pour confirmer que vous avez tous les deux 18 ans ou plus.</p>`;
+        if (!list.length) html += `<p class="receipts-empty">Aucune réservation pour l'instant.</p>`;
+        else html += list.slice().reverse().map(r => `
+          <button class="receipt-card" onclick="viewReceiptByCode('${r.code}')">
+            <p class="receipt-hotel">${r.hotel}</p>
+            <p class="receipt-room">${r.room} · ${r.timeSlot || ''}</p>
+            <p class="receipt-meta">${new Date(r.time).toLocaleString('fr-FR')}${r.code ? ' · ' + r.code : ''}</p>
+            <p class="receipt-price">$${r.price}</p>
+          </button>
+        `).join('');
+        el.innerHTML = html;
+      }
+
+      window.openAccountModal = function () { document.getElementById('headerMenu').classList.remove('show'); document.getElementById('accountModal').style.display = 'flex'; };
+      window.closeAccountModal = function () { document.getElementById('accountModal').style.display = 'none'; };
+      window.saveAccountContact = async function () {
+        const contact = document.getElementById('accountContact').value.trim();
+        if (!contact || !currentAccount) { closeAccountModal(); return; }
+        currentAccount.contact = contact;
+        try { await window.storage.set('kp_account', JSON.stringify(currentAccount)); } catch (e) { console.error(e); }
+        closeAccountModal();
+      };
+
+      window.toggleHeaderMenu = function () { document.getElementById('headerMenu').classList.toggle('show'); };
+
+      function calcAge(dobStr) { const dob=new Date(dobStr); if(isNaN(dob.getTime())) return 0; const today=new Date(); let age=today.getFullYear()-dob.getFullYear(); const m=today.getMonth()-dob.getMonth(); if(m<0||(m===0&&today.getDate()<dob.getDate())) age--; return age; }
+      let obData = { username: '', birthdate: '' };
+      function renderOnboarding() {
+        const el = document.getElementById('onboardingContent');
+        el.innerHTML = `
+          <div class="ob-mark"><svg viewBox="0 0 24 24" width="22" height="22"><g fill="#121212">${ROOK_PATH}</g></svg></div>
+          <p class="ob-eyebrow">Bienvenue</p>
+          <h1 class="ob-title">KinPause</h1>
+          <p class="ob-sub">Un espace privé pour votre temps, à Kinshasa.</p>
+          <label class="ob-label">Nom d'utilisateur</label>
+          <input type="text" id="obUsername" class="ob-input" placeholder="Un pseudo suffit" value="${obData.username}">
+          <label class="ob-label">Date de naissance</label>
+          <input type="date" id="obDob" class="ob-input" value="${obData.birthdate}">
+          <div id="obError" class="ob-error"></div>
+          <button class="ob-btn" onclick="obSubmit()">Continuer</button>
+          <p class="ob-note">KinPause protège votre vie privée : seuls votre pseudo et votre âge sont nécessaires pour commencer. Vous pourrez créer un compte complet plus tard, si vous le souhaitez.</p>
+        `;
+      }
+      window.obSubmit = async function () {
+        const username = document.getElementById('obUsername').value.trim();
+        const dob = document.getElementById('obDob').value;
+        const errEl = document.getElementById('obError');
+        if (!username || !dob) { errEl.textContent = 'Veuillez remplir tous les champs.'; return; }
+        const age = calcAge(dob);
+        if (!age || age < 18) { errEl.textContent = 'Vous devez avoir 18 ans ou plus pour utiliser KinPause.'; return; }
+        errEl.textContent = '';
+        currentAccount = { username, birthdate: dob, ageVerified: true };
+        try { await window.storage.set('kp_account', JSON.stringify({ username, birthdate: dob, ageVerified: true, createdAt: new Date().toISOString() })); } catch (e) { console.error('Account save failed', e); }
+        document.getElementById('onboarding').style.display = 'none';
+        showMapView();
+      };
+
+      function showMapView() {
+        document.getElementById('map').style.display = 'block';
+        document.getElementById('topBar').style.display = 'flex';
+        locateBtn.style.display = 'flex';
+        setTimeout(() => { map.invalidateSize(); updateLabelVisibility(); }, 80);
+        locateUser();
+      }
+
+      async function init() {
+        let account = null;
+        try { const existing = await window.storage.get('kp_account'); if (existing && existing.value) account = JSON.parse(existing.value); } catch (e) {}
+        if (account && account.ageVerified) { currentAccount = account; document.getElementById('onboarding').style.display = 'none'; showMapView(); }
+        else { renderOnboarding(); document.getElementById('onboarding').style.display = 'flex'; }
+        const intro = document.getElementById('introOverlay'); if (intro) intro.classList.add('hide');
+      }
+      init();
+    })();
+  }
+</script>
+</body>
+</html>
