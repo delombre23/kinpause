@@ -518,13 +518,12 @@
         glow.on('dblclick', function (e) {
           try { L.DomEvent.stopPropagation(e); } catch (err) {}
           if (userLocation) {
-            selectHotel(hotel.id);
-            setTimeout(() => {
-              drawRoute(hotel);
-              // Ajuste la vue pour afficher tout l'itinéraire avec padding
-              const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
-              map.fitBounds(bounds, { padding: [50, 50] });
-            }, 300);
+            // Ferme le sheet s'il est ouvert pour ne voir que la carte
+            closeSheet();
+            // Affiche uniquement l'itinéraire sur la carte
+            drawRoute(hotel);
+            const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
+            map.fitBounds(bounds, { padding: [50, 50] });
           } else {
             showToast("Localisez-vous d'abord pour voir l'itinéraire");
             locateUser();
@@ -752,10 +751,9 @@
           locateUser();
           return;
         }
-        const summary = document.getElementById('routeSummary');
-        if (summary) summary.textContent = 'Itinéraire…';
+        // Ferme le sheet pour ne voir que la carte avec l'itinéraire
+        closeSheet();
         await drawRoute(hotel);
-        // Ajuste la vue pour afficher tout l'itinéraire
         const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], [hotel.lat, hotel.lng]]);
         map.fitBounds(bounds, { padding: [50, 50] });
       };
