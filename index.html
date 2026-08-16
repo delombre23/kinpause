@@ -701,7 +701,7 @@
       const bounds = L.latLngBounds(HOTELS.map(h => [h.lat, h.lng]));
       map.fitBounds(bounds, { padding: [50, 50] });
 
-      const BED_ICON_MARKER = '<rect x="4" y="10" width="16" height="8" rx="1"/><rect x="6" y="2" width="12" height="8" rx="1"/><rect x="8" y="4" width="8" height="4" rx="0.5"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>';
+      const BED_ICON_MARKER = '<rect x="4" y="10" width="16" height="8" rx="1"/><rect x="6" y="2" width="12" height="8" rx="1"/><rect x="8" y="4" width="6" height="3" rx="0.5"/><line x1="6" y1="18" x2="6" y2="21"/><line x1="18" y1="18" x2="18" y2="21"/>';
       function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
 
             function addHotelMarker(hotel) {
