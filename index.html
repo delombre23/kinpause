@@ -223,6 +223,202 @@
   .address-block { margin-bottom: 15px; margin-top: -5px; }
   .address-line { font-size: 12.5px; color: var(--text); font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
   .landmarks-line { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
+    /* ===== Institutional Overlay ===== */
+  
+    #institutionalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: var(--bg-deep);
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: instFadeIn 0.4s ease;
+  }
+  #institutionalOverlay.show { display: flex; }
+  @keyframes instFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .institutional-content {
+    flex: 1;
+    padding: max(24px, env(safe-area-inset-top)) 26px max(100px, env(safe-area-inset-bottom));
+    max-width: 720px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .institutional-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 36px;
+    padding-top: 8px;
+  }
+  .institutional-header .ob-mark {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 18px;
+  }
+  .institutional-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .institutional-header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 420px;
+  }
+
+  .institutional-section {
+    margin-bottom: 32px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px 24px;
+    transition: transform 0.15s ease;
+  }
+  .institutional-section h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .institutional-section p {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text);
+    opacity: 0.9;
+  }
+  .institutional-section p + p {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .contact-link:active { transform: scale(0.98); background: var(--card-hi); }
+  .contact-link svg { width: 18px; height: 18px; color: var(--text); flex-shrink: 0; }
+  .contact-link .meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .legal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: var(--card);
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    transition: background 0.15s ease;
+  }
+  .legal-link:active { background: var(--card-hi); }
+
+  #backToMapBtn {
+    position: fixed;
+    left: 50%;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 501;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: #FFFFFF;
+    color: #121212;
+    border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    white-space: nowrap;
+  }
+  #backToMapBtn.show { display: flex; }
+  #backToMapBtn:active { transform: translateX(-50%) scale(0.96); }
+
+  /* ===== Legal Modal ===== */
+  #legalModal {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    display: none;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0;
+  }
+  #legalModal.show { display: flex; }
+  .legal-sheet {
+    background: var(--panel);
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 24px 24px calc(30px + env(safe-area-inset-bottom));
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    animation: legalSlideUp 0.3s ease;
+  }
+  @keyframes legalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .legal-sheet h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-right: 40px;
+  }
+  .legal-sheet h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .legal-sheet p {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .legal-sheet ul {
+    margin: 8px 0 12px 18px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .legal-sheet li { margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -1113,9 +1309,80 @@
         else { renderOnboarding(); document.getElementById('onboarding').style.display = 'flex'; }
         const intro = document.getElementById('introOverlay'); if (intro) intro.classList.add('hide');
       }
+            // ===== Institutional View Logic =====
+      const INSTITUTIONAL_ZOOM_THRESHOLD = 10;
+      let institutionalVisible = false;
+
+      function checkInstitutionalView() {
+        if (!map) return;
+        const zoom = map.getZoom();
+        if (zoom <= INSTITUTIONAL_ZOOM_THRESHOLD && !institutionalVisible) {
+          showInstitutional();
+        } else if (zoom > INSTITUTIONAL_ZOOM_THRESHOLD && institutionalVisible) {
+          hideInstitutional();
+        }
+      }
+
+      function showInstitutional() {
+        institutionalVisible = true;
+        document.getElementById('sheet').style.display = 'none';
+        document.getElementById('topBar').style.display = 'none';
+        document.getElementById('locateBtn').style.display = 'none';
+        document.getElementById('headerMenu').classList.remove('show');
+        document.getElementById('receiptsView').style.display = 'none';
+        document.getElementById('institutionalOverlay').classList.add('show');
+        document.getElementById('backToMapBtn').classList.add('show');
+      }
+
+      function hideInstitutional() {
+        institutionalVisible = false;
+        document.getElementById('institutionalOverlay').classList.remove('show');
+        document.getElementById('backToMapBtn').classList.remove('show');
+        document.getElementById('topBar').style.display = 'flex';
+        document.getElementById('locateBtn').style.display = 'flex';
+        if (sheetMode !== 'hidden') {
+          document.getElementById('sheet').style.display = 'flex';
+          if (sheetMode === 'list') {
+            document.getElementById('sheet').classList.add('peek');
+            document.getElementById('sheet').classList.remove('expanded');
+            locateBtn.classList.add('raised');
+          } else {
+            document.getElementById('sheet').classList.add('expanded');
+            document.getElementById('sheet').classList.remove('peek');
+            locateBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      window.returnToMap = function () {
+        hideInstitutional();
+        map.flyTo(KINSHASA_CENTER, 13, { duration: 1.2 });
+        setTimeout(() => { map.invalidateSize(); }, 150);
+      };
+
+      window.openLegalModal = function () {
+        document.getElementById('legalModal').classList.add('show');
+      };
+      window.closeLegalModal = function () {
+        document.getElementById('legalModal').classList.remove('show');
+      };
+
+      map.on('zoomend', checkInstitutionalView);
       init();
     })();
   }
 </script>
+<div id="institutionalOverlay">
+  ...
+</div>
+
+<button id="backToMapBtn" onclick="returnToMap()">
+  ...
+</button>
+
+<!-- Legal Modal -->
+<div id="legalModal">
+  ...
+</div>
 </body>
 </html>
