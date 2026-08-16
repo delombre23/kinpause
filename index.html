@@ -1372,17 +1372,88 @@
     })();
   }
 </script>
+<!-- Institutional Overlay -->
 <div id="institutionalOverlay">
-  ...
+  <div class="institutional-content">
+    <div class="institutional-header">
+      <div class="ob-mark"><svg viewBox="0 0 24 24" width="24" height="24"><g fill="#121212"><rect x="5" y="19" width="14" height="2"/><polygon points="7.5,19 16.5,19 15.5,10 8.5,10"/><rect x="6.5" y="6" width="11" height="3"/><rect x="6.5" y="2.5" width="2.8" height="4"/><rect x="10.6" y="2.5" width="2.8" height="4"/><rect x="14.7" y="2.5" width="2.8" height="4"/></g></svg></div>
+      <h1>KinPause</h1>
+      <p>La plateforme de réservation flexible et discrète d'espaces privés à Kinshasa.</p>
+    </div>
+
+    <div class="institutional-section">
+      <h2>Qui sommes-nous</h2>
+      <p>KinPause est une plateforme conçue pour répondre à un besoin urbain essentiel : accéder à des espaces privés, confortables et sécurisés, à la demande.</p>
+      <p>Que ce soit pour quelques heures de repos, un moment de tranquillité ou une escapade discrète en plein centre de Kinshasa, nous connectons nos utilisateurs avec des établissements de qualité — hôtels, appartements privés et suites — sélectionnés pour leur discrétion, leur propreté et leur flexibilité.</p>
+    </div>
+
+    <div class="institutional-section">
+      <h2>Notre mission</h2>
+      <p>Revisiter la gestion du temps et l'hospitalité urbaine à Kinshasa en offrant une réservation sur mesure, sans friction et respectueuse de la vie privée.</p>
+      <p>Nous croyons que chacun mérite un espace à soi, quand il en a besoin. Sans jugement, sans attente, sans complication. KinPause s'engage à rendre l'accès au repos urbain aussi simple qu'un clic — tout en garantissant la sécurité, la confidentialité et la satisfaction de nos utilisateurs et partenaires.</p>
+    </div>
+
+    <div class="institutional-section">
+      <h2>Contact</h2>
+      <p style="margin-bottom:14px;color:var(--text-muted);font-size:12.5px;">Une question, une suggestion ou un partenariat ? Notre équipe vous répond sous 24h.</p>
+      <div class="contact-links">
+        <a class="contact-link" href="mailto:hello@kinpause.app">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg>
+          <div>
+            <div>hello@kinpause.app</div>
+            <div class="meta">Support & partenariats</div>
+          </div>
+        </a>
+        <a class="contact-link" href="https://wa.me/243820460810" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .3 2 .6 3a2 2 0 01-.5 2L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012-.5c1 .3 2 .5 3 .6a2 2 0 011.7 2z"/></svg>
+          <div>
+            <div>+243 820 460 810</div>
+            <div class="meta">WhatsApp support</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="institutional-section">
+      <h2>Mentions légales</h2>
+      <p style="margin-bottom:14px;color:var(--text-muted);font-size:12.5px;">Transparence et confiance sont au cœur de notre démarche.</p>
+      <button class="legal-link" onclick="openLegalModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        Politique de confidentialité & CGU
+      </button>
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:20px;opacity:0.6;">© 2026 KinPause. Tous droits réservés.</p>
+  </div>
 </div>
 
 <button id="backToMapBtn" onclick="returnToMap()">
-  ...
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s-7 6-7 11a7 7 0 0014 0c0-5-7-11-7-11z"/><circle cx="12" cy="13" r="2.5"/><path d="M12 21.5V24M9 20l-3 3M15 20l3 3"/></svg>
+  Retour à la carte
 </button>
 
 <!-- Legal Modal -->
 <div id="legalModal">
-  ...
+  <div class="legal-sheet">
+    <button class="modal-close" onclick="closeLegalModal()" aria-label="Fermer">✕</button>
+    <h2>Mentions légales</h2>
+
+    <h3>Politique de confidentialité</h3>
+    <p>KinPause collecte uniquement les données strictement nécessaires au fonctionnement du service : un pseudonyme, une date de naissance (pour vérifier l'âge minimum de 18 ans) et, de manière facultative, un contact email ou téléphone pour la récupération des réservations.</p>
+    <p>Aucune donnée de géolocalisation n'est stockée sur nos serveurs. Votre position est utilisée uniquement en temps réel sur votre appareil pour afficher les hôtels à proximité. Les réservations sont conservées localement sur votre appareil, sauf si vous choisissez de les associer à un compte.</p>
+    <p>Nous ne vendons, ne louons et ne partageons vos données personnelles avec des tiers à des fins commerciales. Les établissements partenaires reçoivent uniquement les informations nécessaires à la validation de votre réservation (code de vérification et pièce d'identité sur présentation physique).</p>
+
+    <h3>Conditions générales d'utilisation</h3>
+    <p>En utilisant KinPause, vous acceptez les conditions suivantes :</p>
+    <ul>
+      <li>Vous devez être âgé d'au moins 18 ans pour effectuer une réservation.</li>
+      <li>Une pièce d'identité valide (passeport, permis de conduire, carte d'étudiant ou carte d'électeur) est requise à l'arrivée à l'hôtel, pour vous et votre éventuel partenaire.</li>
+      <li>Les prix affichés sont indicatifs et peuvent varier selon la disponibilité réelle de l'établissement.</li>
+      <li>KinPause agit comme intermédiaire de mise en relation et ne saurait être tenu responsable des prestations directement fournies par les établissements.</li>
+      <li>Le respect des règles de l'établissement (horaires, nombre de personnes, comportement) est de votre responsabilité.</li>
+    </ul>
+    <p>Pour toute question relative à ces documents, contactez-nous à hello@kinpause.app.</p>
+  </div>
 </div>
 </body>
 </html>
