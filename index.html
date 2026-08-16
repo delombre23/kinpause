@@ -84,8 +84,10 @@
   @media (prefers-reduced-motion: reduce) { .user-marker-pulse { animation: none; opacity: 0.3; } }
 
   .hotel-badge-wrap { pointer-events: none !important; }
-  .hotel-badge { width: 30px; height: 30px; border-radius: 50%; background: rgba(18,18,18,0.88); border: 1.5px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.55); }
-  .hotel-badge svg { width: 17px; height: 17px; }
+  .hotel-marker-pin { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)); }
+  .hotel-badge { width: 32px; height: 28px; border-radius: 8px 8px 6px 6px; background: rgba(28,28,30,0.95); display: flex; align-items: center; justify-content: center; }
+  .hotel-badge svg { width: 16px; height: 16px; }
+  .hotel-pointer { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid rgba(28,28,30,0.95); }
   .hotel-label, .leaflet-tooltip.hotel-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 0 0 4px !important; color: #FFFFFF !important; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.75); white-space: nowrap; }
   .hotel-label::before { display: none !important; }
   .hotspot-label, .leaflet-tooltip.hotspot-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; color: rgba(255,255,255,0.6) !important; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; font-size: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); white-space: nowrap; }
@@ -502,12 +504,12 @@
       const bounds = L.latLngBounds(HOTELS.map(h => [h.lat, h.lng]));
       map.fitBounds(bounds, { padding: [50, 50] });
 
-      const BED_ICON_MARKER = '<path d="M3 17v-5a2 2 0 012-2h14a2 2 0 012 2v5M3 17v2M21 17v2M5 10V7a2 2 0 012-2h3a2 2 0 012 2v3M12 10V8a2 2 0 012-2h3a2 2 0 012 2v2"/>';
-      function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
+      const BED_ICON_MARKER = '<path d="M5 8.5h14"/><path d="M5 11h14"/><path d="M5 14h14"/><path d="M5 11v3"/><path d="M19 11v3"/>';
+      function bedMarkerSvg(color) { return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${BED_ICON_MARKER}</svg>`; }
 
             function addHotelMarker(hotel) {
         const glow = L.circleMarker([hotel.lat, hotel.lng], { radius: 16, fillColor: '#FFFFFF', fillOpacity: 0.12, stroke: false, interactive: true }).addTo(map);
-        const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), interactive: false, keyboard: false }).addTo(map);
+        const badge = L.marker([hotel.lat, hotel.lng], { icon: L.divIcon({ className: 'hotel-badge-wrap', html: '<div class="hotel-marker-pin"><div class="hotel-badge">' + bedMarkerSvg('#FFFFFF') + '</div><div class="hotel-pointer"></div></div>', iconSize: [32, 34], iconAnchor: [16, 34] }), interactive: false, keyboard: false }).addTo(map);
         glow.bindTooltip(hotel.name, { permanent: true, direction: 'right', offset: [17, 0], className: 'hotel-label', opacity: 1 });
 
         glow.on('click', function (e) { try { L.DomEvent.stopPropagation(e); } catch (err) {} selectHotel(hotel.id); });
