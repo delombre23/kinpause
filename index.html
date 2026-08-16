@@ -459,7 +459,8 @@
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
 </button>
 
-<div id="sheet"><div class="sheet-handle"></div><div id="sheetContent"></div></div>
+<div id="sheet"><div class="sheet-handle" role="button" tabindex="0" aria-label="Fermer ou réduire le panneau"></div>
+<div id="sheetContent"></div></div>
 
 <div id="receiptsView">
   <div class="receipts-header"><button class="back-btn" onclick="hideReceipts()">‹ Retour</button><h2>Vos réservations</h2></div>
@@ -491,7 +492,7 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
 <script>
   // ===== Service Worker Registration =====
   if ('serviceWorker' in navigator) {
@@ -975,9 +976,10 @@
           html += `<p class="amenity-cat-heading">${CAT_LABELS[catKey]}</p><ul class="amenity-list">${items.map(a => `<li>${amenityIconSvg('check')}${a.label}</li>`).join('')}</ul>`;
         });
         document.getElementById('roomAmenitiesContent').innerHTML = html;
-        document.getElementById('roomAmenitiesModal').style.display = 'flex';
+                document.getElementById('roomAmenitiesModal').style.display = 'flex';
+        trapFocus(document.getElementById('roomAmenitiesModal'));
       };
-      window.closeRoomAmenities = function () { document.getElementById('roomAmenitiesModal').style.display = 'none'; };
+            window.closeRoomAmenities = function () { releaseFocus(); document.getElementById('roomAmenitiesModal').style.display = 'none'; };
 
             window.selectRoom = function (roomId) {
         try {
@@ -1174,10 +1176,10 @@
         return canvas;
       }
       function triggerReceiptDownload(r){ try{ const canvas=drawReceiptCanvas(r); const link=document.createElement('a'); link.download='KinPause-recu-'+(r.code||'x')+'.png'; link.href=canvas.toDataURL('image/png'); link.click(); }catch(e){console.error('Receipt download failed',e);} }
-      function openReceiptModal(r){ currentModalReceipt=r; try{ const canvas=drawReceiptCanvas(r); document.getElementById('receiptModalImg').src=canvas.toDataURL('image/png'); document.getElementById('receiptModal').style.display='flex'; }catch(e){console.error('Receipt view failed',e);} }
+      function openReceiptModal(r){ currentModalReceipt=r; try{ const canvas=drawReceiptCanvas(r); document.getElementById('receiptModalImg').src=canvas.toDataURL('image/png'); document.getElementById('receiptModal').style.display='flex'; trapFocus(document.getElementById('receiptModal')); }catch(e){console.error('Receipt view failed',e);} }
       window.viewLastReceipt = function(){ if(lastReceipt) openReceiptModal(lastReceipt); };
       window.viewReceiptByCode = function(code){ const r=receiptsCache.find(x=>x.code===code); if(r) openReceiptModal(r); };
-      window.closeReceiptModal = function(){ document.getElementById('receiptModal').style.display='none'; };
+      window.closeReceiptModal = function(){ releaseFocus(); document.getElementById('receiptModal').style.display='none'; };
       window.downloadCurrentReceipt = function(){ if(currentModalReceipt) triggerReceiptDownload(currentModalReceipt); };
 
             async function fetchRealRoute(from, to) {
@@ -1322,8 +1324,8 @@
         el.innerHTML = html;
       }
 
-      window.openAccountModal = function () { document.getElementById('headerMenu').classList.remove('show'); document.getElementById('accountModal').style.display = 'flex'; };
-      window.closeAccountModal = function () { document.getElementById('accountModal').style.display = 'none'; };
+      window.openAccountModal = function () { document.getElementById('headerMenu').classList.remove('show'); document.getElementById('accountModal').style.display = 'flex'; trapFocus(document.getElementById('accountModal')); };
+      window.closeAccountModal = function () { releaseFocus(); document.getElementById('accountModal').style.display = 'none'; };
       window.saveAccountContact = async function () {
         const contact = document.getElementById('accountContact').value.trim();
         if (!contact || !currentAccount) { closeAccountModal(); return; }
@@ -1346,7 +1348,7 @@
           <label class="ob-label">Nom d'utilisateur</label>
           <input type="text" id="obUsername" class="ob-input" placeholder="Créez votre pseudo" value="${obData.username}">
           <label class="ob-label">Date de naissance</label>
-          <input type="date" id="obDob" class="ob-input" value="${obData.birthdate}">
+          <input type="date" id="obDob" class="ob-input" value="${obData.birthdate}" max="${new Date().toISOString().split('T')[0]}">
           <div id="obError" class="ob-error"></div>
           <button class="ob-btn" onclick="obSubmit()">Continuer</button>
           <p class="ob-note">KinPause protège votre vie privée : seuls votre pseudo et votre âge sont nécessaires pour commencer. Vous pourrez créer un compte complet plus tard, si vous le souhaitez.</p>
@@ -1499,10 +1501,12 @@
         setTimeout(() => { map.invalidateSize(); }, 150);
       };
 
-      window.openLegalModal = function () {
+            window.openLegalModal = function () {
         document.getElementById('legalModal').classList.add('show');
+        trapFocus(document.getElementById('legalModal'));
       };
-      window.closeLegalModal = function () {
+            window.closeLegalModal = function () {
+        releaseFocus();
         document.getElementById('legalModal').classList.remove('show');
       };
 
