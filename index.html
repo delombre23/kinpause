@@ -213,8 +213,6 @@
   .amenity-list li { font-size: 13.5px; padding: 7px 0; }
   .amenity-cat-heading { font-size: 11px; letter-spacing: 0.1em; margin: 20px 0 10px; }
 
-    #accountModal { display: none; }
-
   .route-summary { cursor: pointer; }
   .route-summary:active { transform: scale(0.96); background: var(--card-hi); }
   .google-maps-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; background: var(--card); color: var(--text); padding: 6px 13px; border-radius: 100px; font-weight: 500; margin-bottom: 15px; border: 1px solid var(--border); transition: transform 0.15s ease; }
@@ -1376,12 +1374,65 @@
         locateUser();
       }
 
-      async function init() {
+            async function init() {
         let account = null;
         try { const existing = await window.storage.get('kp_account'); if (existing && existing.value) account = JSON.parse(existing.value); } catch (e) {}
         if (account && account.ageVerified) { currentAccount = account; document.getElementById('onboarding').style.display = 'none'; showMapView(); }
         else { renderOnboarding(); document.getElementById('onboarding').style.display = 'flex'; }
         const intro = document.getElementById('introOverlay'); if (intro) intro.classList.add('hide');
+
+        // Fermer le menu header au clic extérieur
+        document.addEventListener('click', function(e) {
+          const menu = document.getElementById('headerMenu');
+          const avatar = document.getElementById('avatarBtn');
+          if (menu.classList.contains('show') && !menu.contains(e.target) && !avatar.contains(e.target)) {
+            menu.classList.remove('show');
+          }
+        });
+
+        // Swipe vers le bas pour fermer / réduire le sheet
+        (function setupSheetSwipe() {
+          const sheet = document.getElementById('sheet');
+          const handle = sheet.querySelector('.sheet-handle');
+          let startY = 0, currentY = 0, isDragging = false;
+
+          function onTouchStart(e) {
+            if (sheetMode === 'hidden') return;
+            const content = document.getElementById('sheetContent');
+            const isHandle = handle && handle.contains(e.target);
+            const canSwipe = isHandle || (content && content.scrollTop <= 0);
+            if (!canSwipe) return;
+            startY = e.touches[0].clientY;
+            isDragging = true;
+          }
+
+          function onTouchMove(e) {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const delta = currentY - startY;
+            if (delta > 0) {
+              e.preventDefault();
+              sheet.style.transition = 'none';
+              sheet.style.transform = 'translateY(' + delta + 'px)';
+            }
+          }
+
+          function onTouchEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.style.transition = '';
+            sheet.style.transform = '';
+            if ((currentY - startY) > 80) {
+              if (sheetMode === 'hotel') collapseSheet();
+              else closeSheet();
+            }
+            startY = 0; currentY = 0;
+          }
+
+          sheet.addEventListener('touchstart', onTouchStart, { passive: true });
+          sheet.addEventListener('touchmove', onTouchMove, { passive: false });
+          sheet.addEventListener('touchend', onTouchEnd);
+        })();
       }
             // ===== Institutional View Logic =====
       const INSTITUTIONAL_ZOOM_THRESHOLD = 10;
