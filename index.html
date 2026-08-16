@@ -819,8 +819,9 @@
         if (sel) sel.style.display = sel.style.display === 'none' ? 'block' : 'none';
       };
       window.onCustomDurationChange = function () {
-        const h = parseInt(document.getElementById('customHours').value) || 0;
-        const m = parseInt(document.getElementById('customMinutes').value) || 0;
+        const val = document.getElementById('customTimeInput').value;
+        if (!val) return;
+        const [h, m] = val.split(':').map(Number);
         selectedDuration = h + m / 60;
         refreshRoomDetail();
       };
@@ -1001,9 +1002,7 @@
       };
 
             function renderRoomDetail(hotel, room) {
-        const isCustomActive = selectedDuration !== 2 && selectedDuration !== 4 && selectedDuration !== 10;
-        const hoursOptions = [0,1,2,3,4,5,6,7,8,9,10,11,12].map(v => `<option value="${v}" ${Math.floor(selectedDuration) === v ? 'selected' : ''}>${v} h</option>`).join('');
-        const minutesOptions = [0,15,30,45].map(v => `<option value="${v}" ${Math.round((selectedDuration % 1) * 60) === v ? 'selected' : ''}>${v} min</option>`).join('');
+            const isCustomActive = selectedDuration !== 2 && selectedDuration !== 4 && selectedDuration !== 10;
 
         sheetContent.innerHTML = `
           <button class="back-btn" onclick="backToRooms()">‹ Retour aux chambres</button>
@@ -1023,15 +1022,11 @@
             <button class="preset-btn ${isCustomActive ? 'active' : ''}" onclick="applyCustom()">Personnalisé</button>
             <button class="preset-btn ${selectedDuration === 10 ? 'active' : ''}" onclick="applyPreset(8)">Nuit</button>
           </div>
-          <div id="customDurationSelector" style="display:${isCustomActive ? 'block' : 'none'}; margin-bottom:14px;">
+          div id="customDurationSelector" style="display:${isCustomActive ? 'block' : 'none'}; margin-bottom:14px;">
             <div class="time-row">
-              <div class="time-field">
-                <label>Heures</label>
-                <select id="customHours" class="ob-input" style="padding:11px 12px;" onchange="onCustomDurationChange()">${hoursOptions}</select>
-              </div>
-              <div class="time-field">
-                <label>Minutes</label>
-                <select id="customMinutes" class="ob-input" style="padding:11px 12px;" onchange="onCustomDurationChange()">${minutesOptions}</select>
+              <div class="time-field" style="flex: 1;">
+                <label>Durée personnalisée</label>
+                <input type="time" id="customTimeInput" class="ob-input" value="${String(Math.floor(selectedDuration)).padStart(2,'0')}:${String(Math.round((selectedDuration % 1) * 60)).padStart(2,'0')}" onchange="onCustomDurationChange()" style="font-family:'IBM Plex Mono',monospace;">
               </div>
             </div>
           </div>
