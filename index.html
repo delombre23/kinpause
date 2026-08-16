@@ -638,7 +638,7 @@
       const REAL_ROOM_PHOTOS = [];
       function roomPhotoSrc(roomId, idx) { return REAL_ROOM_PHOTOS.length ? REAL_ROOM_PHOTOS[(roomId * 3 + idx) % REAL_ROOM_PHOTOS.length] : ''; }
       function photoSvg(kind) {
-        const icons = { bed: '<path d="M3 18v-6a2 2 0 012-2h4a2 2 0 012 2M3 18h18M3 18v2M21 18v2M13 10h6a2 2 0 012 2v6M7 10V7a2 2 0 012-2h2a2 2 0 012 2v3"/>', bath: '<path d="M4 12h16M6 12V6a2 2 0 012-2h2M8 12v6a1 1 0 001 1h6a1 1 0 001-1v-6"/>', view: '<path d="M3 20l5-7 4 4.5 3-3.5 6 6M3 4h18v13H3z"/>' };
+        const icons = { bed: bed: '<path d="M3 16v-4a2 2 0 012-2h14a2 2 0 012 2v4M3 16v1.5M21 16v1.5M5 10V7a2 2 0 012-2h3a2 2 0 012 2v3M12 10V8a2 2 0 012-2h3a2 2 0 012 2v2"/>', bath: '<path d="M4 12h16M6 12V6a2 2 0 012-2h2M8 12v6a1 1 0 001 1h6a1 1 0 001-1v-6"/>', view: '<path d="M3 20l5-7 4 4.5 3-3.5 6 6M3 4h18v13H3z"/>' };
         return `<svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[kind]}</svg>`;
       }
       const PHOTO_GRADIENTS = [['#2C2C2C','#121212'], ['#242424','#121212'], ['#1E1E1E','#121212']];
