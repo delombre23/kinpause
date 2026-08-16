@@ -1392,26 +1392,42 @@
           }
         });
 
-                        // Swipe vers le bas pour fermer / réduire le sheet
-        (function setupSheetSwipe() {
+                                (function setupSheetSwipe() {
           const sheet = document.getElementById('sheet');
           const handle = sheet.querySelector('.sheet-handle');
           const content = document.getElementById('sheetContent');
           let startY = 0, currentY = 0, isDragging = false, startHeight = 0;
 
-          function onTouchStart(e) {
+          // Accessibilité clavier sur le handle
+          if (handle) {
+            handle.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (sheetMode === 'hotel') collapseSheet();
+                else closeSheet();
+              }
+            });
+          }
+
+          function onPointerDown(e) {
             if (sheetMode === 'hidden') return;
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
             const isHandle = handle && handle.contains(e.target);
             const isContentTop = content && content.scrollTop <= 0;
             if (!isHandle && !isContentTop) return;
-            startY = e.touches[0].clientY;
+            startY = clientY;
             startHeight = sheet.getBoundingClientRect().height;
             isDragging = false;
+            document.addEventListener('mousemove', onPointerMove);
+            document.addEventListener('mouseup', onPointerUp);
+            document.addEventListener('touchmove', onPointerMove, { passive: false });
+            document.addEventListener('touchend', onPointerUp);
           }
 
-          function onTouchMove(e) {
+          function onPointerMove(e) {
             if (sheetMode === 'hidden' || startY === 0) return;
-            currentY = e.touches[0].clientY;
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            currentY = clientY;
             const delta = currentY - startY;
 
             if (!isDragging && delta > 5) {
@@ -1420,18 +1436,22 @@
             }
 
             if (isDragging && delta > 0) {
-              e.preventDefault();
+              if (e.cancelable) e.preventDefault();
               const newHeight = Math.max(0, startHeight - delta);
               sheet.style.height = newHeight + 'px';
             }
           }
 
-          function onTouchEnd() {
+          function onPointerUp() {
+            document.removeEventListener('mousemove', onPointerMove);
+            document.removeEventListener('mouseup', onPointerUp);
+            document.removeEventListener('touchmove', onPointerMove);
+            document.removeEventListener('touchend', onPointerUp);
+
             if (!isDragging) { startY = 0; return; }
             isDragging = false;
             const delta = currentY - startY;
 
-            // Retire le style inline : les classes CSS reprennent le contrôle avec animation naturelle
             sheet.style.transition = '';
             sheet.style.height = '';
 
@@ -1440,14 +1460,12 @@
               else closeSheet();
             }
 
-            startY = 0; 
+            startY = 0;
             currentY = 0;
           }
 
-          sheet.addEventListener('touchstart', onTouchStart, { passive: true });
-          sheet.addEventListener('touchmove', onTouchMove, { passive: false });
-          sheet.addEventListener('touchend', onTouchEnd);
-          sheet.addEventListener('touchcancel', onTouchEnd);
+          sheet.addEventListener('mousedown', onPointerDown);
+          sheet.addEventListener('touchstart', onPointerDown, { passive: true });
         })();
       }
             // ===== Institutional View Logic =====
